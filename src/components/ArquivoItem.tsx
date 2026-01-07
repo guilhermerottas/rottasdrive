@@ -73,8 +73,21 @@ export function ArquivoItem({ arquivo, obraId, viewMode }: ArquivoItemProps) {
     }
   };
 
-  const handleDownload = () => {
-    window.open(arquivo.arquivo_url, "_blank");
+  const handleDownload = async () => {
+    try {
+      const response = await fetch(arquivo.arquivo_url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = arquivo.nome;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error("Erro ao baixar arquivo");
+    }
   };
 
   const handleDragStart = (e: React.DragEvent) => {
