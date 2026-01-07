@@ -1,37 +1,53 @@
+import { useState } from "react";
 import { useObras } from "@/hooks/useObras";
 import { ObraCard } from "@/components/ObraCard";
 import { CreateObraDialog } from "@/components/CreateObraDialog";
-import { UserProfileButton } from "@/components/UserProfileButton";
-import { Building2 } from "lucide-react";
+import { Building2, Plus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import logo from "@/assets/logo.png";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { AppHeader } from "@/components/layout/AppHeader";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const { data: obras, isLoading } = useObras();
+  const [searchValue, setSearchValue] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
+
+  const filteredObras = obras?.filter((obra) =>
+    obra.nome.toLowerCase().includes(searchValue.toLowerCase()) ||
+    obra.endereco?.toLowerCase().includes(searchValue.toLowerCase())
+  );
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto py-8 px-4">
-        <header className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <img src={logo} alt="Logo" style={{ width: 37, height: 37 }} />
-            <h1 className="text-2xl font-bold">Armazenamento Rottas</h1>
+    <AppLayout>
+      <AppHeader 
+        searchValue={searchValue}
+        onSearchChange={setSearchValue}
+      />
+      
+      <div className="flex-1 overflow-auto p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold">Obras</h1>
+            <p className="text-muted-foreground text-sm">
+              Total: {obras?.length || 0} obras
+            </p>
           </div>
-          <div className="flex items-center gap-3">
-            <CreateObraDialog />
-            <UserProfileButton />
-          </div>
-        </header>
+          <Button onClick={() => setCreateOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Nova Obra
+          </Button>
+        </div>
 
         {isLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-24 w-full" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-64 w-full rounded-xl" />
             ))}
           </div>
-        ) : obras && obras.length > 0 ? (
+        ) : filteredObras && filteredObras.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {obras.map((obra) => (
+            {filteredObras.map((obra) => (
               <ObraCard key={obra.id} obra={obra} />
             ))}
           </div>
@@ -42,11 +58,16 @@ const Index = () => {
             <p className="text-muted-foreground mb-6">
               Comece criando sua primeira obra para organizar seus arquivos.
             </p>
-            <CreateObraDialog />
+            <Button onClick={() => setCreateOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Nova Obra
+            </Button>
           </div>
         )}
       </div>
-    </div>
+
+      <CreateObraDialog open={createOpen} onOpenChange={setCreateOpen} showTrigger={false} />
+    </AppLayout>
   );
 };
 

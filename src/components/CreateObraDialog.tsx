@@ -15,8 +15,21 @@ import { useCreateObra } from "@/hooks/useObras";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-export function CreateObraDialog() {
-  const [open, setOpen] = useState(false);
+interface CreateObraDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  showTrigger?: boolean;
+}
+
+export function CreateObraDialog({ 
+  open: controlledOpen, 
+  onOpenChange: controlledOnOpenChange,
+  showTrigger = true 
+}: CreateObraDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = controlledOnOpenChange || setInternalOpen;
+  
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
   const [endereco, setEndereco] = useState("");
@@ -91,12 +104,14 @@ export function CreateObraDialog() {
       setOpen(newOpen);
       if (!newOpen) resetForm();
     }}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Nova Obra
-        </Button>
-      </DialogTrigger>
+      {showTrigger && (
+        <DialogTrigger asChild>
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Nova Obra
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Criar Nova Obra</DialogTitle>

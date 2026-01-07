@@ -15,10 +15,22 @@ import { Progress } from "@/components/ui/progress";
 interface UploadArquivoDialogProps {
   obraId: string;
   pastaId?: string | null;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  showTrigger?: boolean;
 }
 
-export function UploadArquivoDialog({ obraId, pastaId }: UploadArquivoDialogProps) {
-  const [open, setOpen] = useState(false);
+export function UploadArquivoDialog({ 
+  obraId, 
+  pastaId,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+  showTrigger = true 
+}: UploadArquivoDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = controlledOnOpenChange || setInternalOpen;
+  
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -65,12 +77,14 @@ export function UploadArquivoDialog({ obraId, pastaId }: UploadArquivoDialogProp
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <Upload className="mr-2 h-4 w-4" />
-          Upload
-        </Button>
-      </DialogTrigger>
+      {showTrigger && (
+        <DialogTrigger asChild>
+          <Button size="sm">
+            <Upload className="mr-2 h-4 w-4" />
+            Upload
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Enviar Arquivos</DialogTitle>
