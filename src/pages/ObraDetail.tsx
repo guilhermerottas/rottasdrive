@@ -85,7 +85,7 @@ const ObraDetail = () => {
           
           <div className="flex items-start gap-4">
             {/* Obra Photo */}
-            <div className="h-20 w-20 rounded-lg overflow-hidden bg-muted flex-shrink-0 flex items-center justify-center">
+            <div className="rounded-lg overflow-hidden bg-muted flex-shrink-0 flex items-center justify-center" style={{ width: 110, height: 110 }}>
               {obra.foto_url ? (
                 <img 
                   src={obra.foto_url} 
