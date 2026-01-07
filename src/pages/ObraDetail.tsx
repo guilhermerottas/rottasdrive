@@ -13,13 +13,18 @@ import { ArquivoItem } from "@/components/ArquivoItem";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { ChevronLeft, Home, ChevronRight, Folder, FileX, LayoutGrid, List, MapPin, Pencil, Building2 } from "lucide-react";
+import { ChevronLeft, Home, ChevronRight, Folder, FileX, LayoutGrid, List, MapPin, Pencil, Building2, FolderPlus } from "lucide-react";
 import type { Obra } from "@/hooks/useObras";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { AppHeader } from "@/components/layout/AppHeader";
+
 const ObraDetail = () => {
   const { obraId, pastaId } = useParams<{ obraId: string; pastaId?: string }>();
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
   const [isDragOverRoot, setIsDragOverRoot] = useState(false);
   const [editObraOpen, setEditObraOpen] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
   const moveArquivo = useMoveArquivo();
 
   const { data: obra, isLoading: obraLoading } = useQuery({
@@ -42,10 +47,19 @@ const ObraDetail = () => {
 
   const isLoading = obraLoading || pastasLoading || arquivosLoading;
 
+  // Filter pastas and arquivos by search
+  const filteredPastas = pastas?.filter((pasta) =>
+    pasta.nome.toLowerCase().includes(searchValue.toLowerCase())
+  );
+  const filteredArquivos = arquivos?.filter((arquivo) =>
+    arquivo.nome.toLowerCase().includes(searchValue.toLowerCase())
+  );
+
   if (obraLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto py-8 px-4">
+      <AppLayout>
+        <AppHeader />
+        <div className="flex-1 overflow-auto p-6">
           <Skeleton className="h-10 w-64 mb-4" />
           <Skeleton className="h-6 w-48 mb-8" />
           <div className="space-y-4">
@@ -54,26 +68,36 @@ const ObraDetail = () => {
             ))}
           </div>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
   if (!obra) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Obra não encontrada</h1>
-          <Link to="/">
-            <Button>Voltar ao início</Button>
-          </Link>
+      <AppLayout>
+        <AppHeader />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">Obra não encontrada</h1>
+            <Link to="/">
+              <Button>Voltar ao início</Button>
+            </Link>
+          </div>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto py-8 px-4">
+    <AppLayout>
+      <AppHeader 
+        showUpload={true}
+        onUploadClick={() => setUploadOpen(true)}
+        searchValue={searchValue}
+        onSearchChange={setSearchValue}
+      />
+      
+      <div className="flex-1 overflow-auto p-6">
         {/* Header with obra info */}
         <div className="mb-6">
           <Link to="/">
@@ -85,7 +109,7 @@ const ObraDetail = () => {
           
           <div className="flex items-start gap-4">
             {/* Obra Photo */}
-            <div className="rounded-lg overflow-hidden bg-muted flex-shrink-0 flex items-center justify-center" style={{ width: 110, height: 110 }}>
+            <div className="rounded-xl overflow-hidden bg-muted flex-shrink-0 flex items-center justify-center shadow-sm" style={{ width: 100, height: 100 }}>
               {obra.foto_url ? (
                 <img 
                   src={obra.foto_url} 
@@ -140,7 +164,7 @@ const ObraDetail = () => {
             onDrop={async (e) => {
               e.preventDefault();
               setIsDragOverRoot(false);
-              if (!pastaId) return; // Already at root
+              if (!pastaId) return;
               
               try {
                 const data = e.dataTransfer.getData("application/json");
@@ -183,7 +207,6 @@ const ObraDetail = () => {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <CreatePastaDialog obraId={obraId!} pastaPaiId={pastaId} />
-            <UploadArquivoDialog obraId={obraId!} pastaId={pastaId} />
           </div>
           <ToggleGroup
             type="single"
@@ -201,19 +224,23 @@ const ObraDetail = () => {
 
         {/* Content */}
         {isLoading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-16 w-full" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Skeleton key={i} className="aspect-square rounded-xl" />
             ))}
           </div>
         ) : (
           <>
             {/* Pastas */}
-            {pastas && pastas.length > 0 && (
+            {filteredPastas && filteredPastas.length > 0 && (
               <div className="mb-6">
                 <h2 className="text-sm font-medium text-muted-foreground mb-3">Pastas</h2>
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                  {pastas.map((pasta) => (
+                <div className={
+                  viewMode === "grid"
+                    ? "grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+                    : "grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
+                }>
+                  {filteredPastas.map((pasta) => (
                     <PastaItem key={pasta.id} pasta={pasta} />
                   ))}
                 </div>
@@ -221,17 +248,17 @@ const ObraDetail = () => {
             )}
 
             {/* Arquivos */}
-            {arquivos && arquivos.length > 0 && (
+            {filteredArquivos && filteredArquivos.length > 0 && (
               <div>
                 <h2 className="text-sm font-medium text-muted-foreground mb-3">Arquivos</h2>
                 <div
                   className={
                     viewMode === "grid"
-                      ? "grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+                      ? "grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
                       : "grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
                   }
                 >
-                  {arquivos.map((arquivo) => (
+                  {filteredArquivos.map((arquivo) => (
                     <ArquivoItem key={arquivo.id} arquivo={arquivo} obraId={obraId!} viewMode={viewMode} />
                   ))}
                 </div>
@@ -239,7 +266,7 @@ const ObraDetail = () => {
             )}
 
             {/* Empty State */}
-            {(!pastas || pastas.length === 0) && (!arquivos || arquivos.length === 0) && (
+            {(!filteredPastas || filteredPastas.length === 0) && (!filteredArquivos || filteredArquivos.length === 0) && (
               <div className="text-center py-16">
                 <FileX className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
                 <h2 className="text-xl font-semibold mb-2">Pasta vazia</h2>
@@ -252,8 +279,9 @@ const ObraDetail = () => {
         )}
       </div>
 
+      <UploadArquivoDialog obraId={obraId!} pastaId={pastaId} open={uploadOpen} onOpenChange={setUploadOpen} showTrigger={false} />
       <EditObraDialog open={editObraOpen} onOpenChange={setEditObraOpen} obra={obra} />
-    </div>
+    </AppLayout>
   );
 };
 
