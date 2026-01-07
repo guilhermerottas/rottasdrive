@@ -37,69 +37,68 @@ export function ObraCard({ obra }: ObraCardProps) {
 
   return (
     <>
-      <Card className="group hover:shadow-md transition-shadow">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <Link to={`/obra/${obra.id}`} className="flex items-center gap-4 flex-1">
-            <div className="rounded-lg overflow-hidden bg-primary/10 flex-shrink-0 flex items-center justify-center" style={{ width: 100, height: 100 }}>
-              {obra.foto_url ? (
-                <img 
-                  src={obra.foto_url} 
-                  alt={obra.nome} 
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <Building2 className="h-10 w-10 text-primary" />
-              )}
+      <Card className="group hover:shadow-lg transition-all overflow-hidden">
+        <div className="aspect-[4/3] overflow-hidden bg-muted">
+          {obra.foto_url ? (
+            <img 
+              src={obra.foto_url} 
+              alt={obra.nome} 
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="h-full w-full flex items-center justify-center bg-primary/10">
+              <Building2 className="h-16 w-16 text-primary/50" />
             </div>
-            <div className="flex-1 min-w-0">
-              <CardTitle className="text-lg truncate">{obra.nome}</CardTitle>
-              {obra.endereco && (
-                <CardDescription className="mt-0.5 line-clamp-1 text-xs">
-                  {obra.endereco}
-                </CardDescription>
-              )}
-              {obra.descricao && (
-                <CardDescription className="mt-0.5 line-clamp-1">
-                  {obra.descricao}
-                </CardDescription>
-              )}
+          )}
+        </div>
+        <div className="p-4">
+          <div className="flex items-start justify-between gap-2">
+            <Link to={`/obra/${obra.id}`} className="flex-1 min-w-0">
+              <h3 className="font-bold text-lg truncate hover:text-primary transition-colors">
+                {obra.nome}
+              </h3>
+            </Link>
+            <div className="flex items-center gap-1 shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setEditOpen(true);
+                }}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Excluir Obra?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta ação irá excluir a obra "{obra.nome}" e todos os seus arquivos e pastas. Esta ação não pode ser desfeita.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Excluir
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
-            <ChevronRight className="h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-          </Link>
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={(e) => {
-                e.preventDefault();
-                setEditOpen(true);
-              }}
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Excluir Obra?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Esta ação irá excluir a obra "{obra.nome}" e todos os seus arquivos e pastas. Esta ação não pode ser desfeita.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                    Excluir
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
           </div>
-        </CardHeader>
+          {obra.endereco && (
+            <p className="text-sm text-muted-foreground mt-1 truncate">
+              {obra.endereco}
+            </p>
+          )}
+        </div>
       </Card>
 
       <EditObraDialog open={editOpen} onOpenChange={setEditOpen} obra={obra} />
