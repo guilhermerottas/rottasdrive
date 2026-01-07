@@ -40,7 +40,7 @@ export function ObraCard({ obra }: ObraCardProps) {
       <Card className="group hover:shadow-md transition-shadow">
         <CardHeader className="flex flex-row items-center justify-between">
           <Link to={`/obra/${obra.id}`} className="flex items-center gap-4 flex-1">
-            <div className="h-14 w-14 rounded-lg overflow-hidden bg-primary/10 flex-shrink-0 flex items-center justify-center">
+            <div className="rounded-lg overflow-hidden bg-primary/10 flex-shrink-0 flex items-center justify-center" style={{ width: 100, height: 100 }}>
               {obra.foto_url ? (
                 <img 
                   src={obra.foto_url} 
@@ -48,7 +48,7 @@ export function ObraCard({ obra }: ObraCardProps) {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <Building2 className="h-6 w-6 text-primary" />
+                <Building2 className="h-10 w-10 text-primary" />
               )}
             </div>
             <div className="flex-1 min-w-0">
