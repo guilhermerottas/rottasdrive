@@ -1,7 +1,9 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Folder, Trash2 } from "lucide-react";
 import { Pasta, useDeletePasta } from "@/hooks/usePastas";
+import { useMoveArquivo } from "@/hooks/useArquivos";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -14,13 +16,17 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 interface PastaItemProps {
   pasta: Pasta;
 }
 
 export function PastaItem({ pasta }: PastaItemProps) {
+  const [isDragOver, setIsDragOver] = useState(false);
   const deletePasta = useDeletePasta();
+  const moveArquivo = useMoveArquivo();
+  const navigate = useNavigate();
 
   const handleDelete = async () => {
     try {
@@ -31,13 +37,54 @@ export function PastaItem({ pasta }: PastaItemProps) {
     }
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+
+    try {
+      const data = e.dataTransfer.getData("application/json");
+      if (!data) return;
+
+      const { arquivoId, arquivoNome } = JSON.parse(data);
+      
+      await moveArquivo.mutateAsync({ id: arquivoId, pastaId: pasta.id });
+      toast.success(`"${arquivoNome}" movido para "${pasta.nome}"`);
+    } catch (error) {
+      toast.error("Erro ao mover arquivo");
+    }
+  };
+
   return (
-    <div className="group flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+    <div 
+      className={cn(
+        "group flex items-center gap-3 p-3 rounded-lg border transition-colors",
+        isDragOver 
+          ? "bg-primary/10 border-primary border-dashed" 
+          : "hover:bg-muted/50"
+      )}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <Link
         to={`/obra/${pasta.obra_id}/pasta/${pasta.id}`}
         className="flex items-center gap-3 flex-1"
       >
-        <Folder className="h-8 w-8 text-amber-500 fill-amber-100" />
+        <Folder className={cn(
+          "h-8 w-8 transition-colors",
+          isDragOver ? "text-primary fill-primary/20" : "text-amber-500 fill-amber-100"
+        )} />
         <span className="font-medium">{pasta.nome}</span>
       </Link>
       <AlertDialog>
