@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/components/AuthProvider";
 import { UserProfileDialog } from "./UserProfileDialog";
 
 export const UserProfileButton = () => {
-  const { profile } = useAuth();
+  const { profile } = useAuthContext();
   const [open, setOpen] = useState(false);
 
   const getInitials = (name: string | null) => {

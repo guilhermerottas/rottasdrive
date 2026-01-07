@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, LogOut, UserPlus, User, Mail, Lock, Calendar } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/components/AuthProvider";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { InviteUserDialog } from "./InviteUserDialog";
@@ -18,7 +18,7 @@ interface UserProfileDialogProps {
 }
 
 export const UserProfileDialog = ({ open, onOpenChange }: UserProfileDialogProps) => {
-  const { user, profile, isAdmin, signOut, updateProfile, updateEmail, updatePassword, uploadAvatar } = useAuth();
+  const { user, profile, isAdmin, signOut, updateProfile, updateEmail, updatePassword, uploadAvatar } = useAuthContext();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [nome, setNome] = useState("");
