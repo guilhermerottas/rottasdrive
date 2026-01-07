@@ -13,7 +13,7 @@ const Index = () => {
       <div className="container mx-auto py-8 px-4">
         <header className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="Logo" className="h-6 w-6" />
+            <img src={logo} alt="Logo" style={{ width: 37, height: 37 }} />
             <h1 className="text-2xl font-bold">Armazenamento Rottas</h1>
           </div>
           <CreateObraDialog />
