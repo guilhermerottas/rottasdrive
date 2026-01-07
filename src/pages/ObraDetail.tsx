@@ -3,7 +3,8 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { usePastas, usePastaBreadcrumb } from "@/hooks/usePastas";
-import { useArquivos } from "@/hooks/useArquivos";
+import { useArquivos, useMoveArquivo } from "@/hooks/useArquivos";
+import { toast } from "sonner";
 import { CreatePastaDialog } from "@/components/CreatePastaDialog";
 import { UploadArquivoDialog } from "@/components/UploadArquivoDialog";
 import { PastaItem } from "@/components/PastaItem";
@@ -16,6 +17,8 @@ import type { Obra } from "@/hooks/useObras";
 const ObraDetail = () => {
   const { obraId, pastaId } = useParams<{ obraId: string; pastaId?: string }>();
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [isDragOverRoot, setIsDragOverRoot] = useState(false);
+  const moveArquivo = useMoveArquivo();
 
   const { data: obra, isLoading: obraLoading } = useQuery({
     queryKey: ["obra", obraId],
@@ -83,15 +86,44 @@ const ObraDetail = () => {
           )}
         </div>
 
-        {/* Breadcrumb */}
+        {/* Breadcrumb - also drop target for root */}
         <nav className="flex items-center gap-2 text-sm mb-6 flex-wrap">
-          <Link
-            to={`/obra/${obraId}`}
-            className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+          <div
+            className={`flex items-center gap-1 px-2 py-1 rounded transition-colors ${
+              isDragOverRoot 
+                ? "bg-primary/10 ring-2 ring-primary ring-dashed" 
+                : ""
+            }`}
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = "move";
+              if (pastaId) setIsDragOverRoot(true);
+            }}
+            onDragLeave={() => setIsDragOverRoot(false)}
+            onDrop={async (e) => {
+              e.preventDefault();
+              setIsDragOverRoot(false);
+              if (!pastaId) return; // Already at root
+              
+              try {
+                const data = e.dataTransfer.getData("application/json");
+                if (!data) return;
+                const { arquivoId, arquivoNome } = JSON.parse(data);
+                await moveArquivo.mutateAsync({ id: arquivoId, pastaId: null });
+                toast.success(`"${arquivoNome}" movido para a raiz`);
+              } catch (error) {
+                toast.error("Erro ao mover arquivo");
+              }
+            }}
           >
-            <Home className="h-4 w-4" />
-            <span>Raiz</span>
-          </Link>
+            <Link
+              to={`/obra/${obraId}`}
+              className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Home className="h-4 w-4" />
+              <span>Raiz</span>
+            </Link>
+          </div>
           {breadcrumb?.map((pasta) => (
             <span key={pasta.id} className="flex items-center gap-2">
               <ChevronRight className="h-4 w-4 text-muted-foreground" />

@@ -123,3 +123,20 @@ export function useMoveArquivo() {
     },
   });
 }
+
+export function useRenameArquivo() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, nome }: { id: string; nome: string }) => {
+      const { error } = await supabase
+        .from("arquivos")
+        .update({ nome })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["arquivos"] });
+    },
+  });
+}

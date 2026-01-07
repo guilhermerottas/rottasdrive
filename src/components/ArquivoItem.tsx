@@ -10,6 +10,7 @@ import {
   Eye,
   MoreVertical,
   FolderInput,
+  Pencil,
 } from "lucide-react";
 import { Arquivo, useDeleteArquivo } from "@/hooks/useArquivos";
 import { toast } from "sonner";
@@ -31,6 +32,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoveArquivoDialog } from "./MoveArquivoDialog";
+import { RenameArquivoDialog } from "./RenameArquivoDialog";
 import { cn } from "@/lib/utils";
 
 interface ArquivoItemProps {
@@ -57,6 +59,7 @@ const formatSize = (bytes: number | null) => {
 export function ArquivoItem({ arquivo, obraId, viewMode }: ArquivoItemProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const deleteArquivo = useDeleteArquivo();
   const Icon = getFileIcon(arquivo.tipo);
   const isImage = arquivo.tipo?.startsWith("image/");
@@ -74,10 +77,22 @@ export function ArquivoItem({ arquivo, obraId, viewMode }: ArquivoItemProps) {
     window.open(arquivo.arquivo_url, "_blank");
   };
 
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.setData("application/json", JSON.stringify({
+      arquivoId: arquivo.id,
+      arquivoNome: arquivo.nome,
+    }));
+    e.dataTransfer.effectAllowed = "move";
+  };
+
   if (viewMode === "grid") {
     return (
       <>
-        <div className="group relative flex flex-col items-center p-4 rounded-lg border hover:bg-muted/50 transition-colors">
+        <div 
+          className="group relative flex flex-col items-center p-4 rounded-lg border hover:bg-muted/50 transition-colors cursor-grab active:cursor-grabbing"
+          draggable
+          onDragStart={handleDragStart}
+        >
           {/* Dropdown Menu */}
           <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <DropdownMenu>
@@ -97,6 +112,11 @@ export function ArquivoItem({ arquivo, obraId, viewMode }: ArquivoItemProps) {
                   <Download className="mr-2 h-4 w-4" />
                   Download
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setRenameDialogOpen(true)}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Renomear
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setMoveDialogOpen(true)}>
                   <FolderInput className="mr-2 h-4 w-4" />
                   Mover
@@ -114,7 +134,7 @@ export function ArquivoItem({ arquivo, obraId, viewMode }: ArquivoItemProps) {
           </div>
 
           {/* Icon/Preview */}
-          <div className="mb-3">
+          <div className="mb-3 pointer-events-none">
             {isImage ? (
               <img
                 src={arquivo.arquivo_url}
@@ -159,14 +179,25 @@ export function ArquivoItem({ arquivo, obraId, viewMode }: ArquivoItemProps) {
           obraId={obraId}
           currentPastaId={arquivo.pasta_id}
         />
+
+        <RenameArquivoDialog
+          open={renameDialogOpen}
+          onOpenChange={setRenameDialogOpen}
+          arquivoId={arquivo.id}
+          currentName={arquivo.nome}
+        />
       </>
     );
   }
 
   return (
     <>
-      <div className="group flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
-        <div className="flex-shrink-0">
+      <div 
+        className="group flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors cursor-grab active:cursor-grabbing"
+        draggable
+        onDragStart={handleDragStart}
+      >
+        <div className="flex-shrink-0 pointer-events-none">
           {isImage ? (
             <img
               src={arquivo.arquivo_url}
@@ -177,7 +208,7 @@ export function ArquivoItem({ arquivo, obraId, viewMode }: ArquivoItemProps) {
             <Icon className="h-8 w-8 text-muted-foreground" />
           )}
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 pointer-events-none">
           <p className="font-medium truncate">{arquivo.nome}</p>
           <p className="text-sm text-muted-foreground">{formatSize(arquivo.tamanho)}</p>
         </div>
@@ -197,6 +228,10 @@ export function ArquivoItem({ arquivo, obraId, viewMode }: ArquivoItemProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setRenameDialogOpen(true)}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Renomear
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setMoveDialogOpen(true)}>
                 <FolderInput className="mr-2 h-4 w-4" />
                 Mover para...
@@ -241,6 +276,13 @@ export function ArquivoItem({ arquivo, obraId, viewMode }: ArquivoItemProps) {
         arquivoNome={arquivo.nome}
         obraId={obraId}
         currentPastaId={arquivo.pasta_id}
+      />
+
+      <RenameArquivoDialog
+        open={renameDialogOpen}
+        onOpenChange={setRenameDialogOpen}
+        arquivoId={arquivo.id}
+        currentName={arquivo.nome}
       />
     </>
   );
