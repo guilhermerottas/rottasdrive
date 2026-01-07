@@ -1,5 +1,16 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { FileText, FileImage, FileVideo, File, Trash2, Download, Eye } from "lucide-react";
+import {
+  FileText,
+  FileImage,
+  FileVideo,
+  File,
+  Trash2,
+  Download,
+  Eye,
+  MoreVertical,
+  FolderInput,
+} from "lucide-react";
 import { Arquivo, useDeleteArquivo } from "@/hooks/useArquivos";
 import { toast } from "sonner";
 import {
@@ -11,11 +22,21 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoveArquivoDialog } from "./MoveArquivoDialog";
+import { cn } from "@/lib/utils";
 
 interface ArquivoItemProps {
   arquivo: Arquivo;
+  obraId: string;
+  viewMode: "list" | "grid";
 }
 
 const getFileIcon = (tipo: string | null) => {
@@ -33,7 +54,9 @@ const formatSize = (bytes: number | null) => {
   return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 };
 
-export function ArquivoItem({ arquivo }: ArquivoItemProps) {
+export function ArquivoItem({ arquivo, obraId, viewMode }: ArquivoItemProps) {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const deleteArquivo = useDeleteArquivo();
   const Icon = getFileIcon(arquivo.tipo);
   const isImage = arquivo.tipo?.startsWith("image/");
@@ -51,38 +74,64 @@ export function ArquivoItem({ arquivo }: ArquivoItemProps) {
     window.open(arquivo.arquivo_url, "_blank");
   };
 
-  return (
-    <div className="group flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
-      <div className="flex-shrink-0">
-        {isImage ? (
-          <img
-            src={arquivo.arquivo_url}
-            alt={arquivo.nome}
-            className="h-10 w-10 object-cover rounded"
-          />
-        ) : (
-          <Icon className="h-8 w-8 text-muted-foreground" />
-        )}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="font-medium truncate">{arquivo.nome}</p>
-        <p className="text-sm text-muted-foreground">{formatSize(arquivo.tamanho)}</p>
-      </div>
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        {isImage && (
-          <Button variant="ghost" size="icon" onClick={handleDownload}>
-            <Eye className="h-4 w-4" />
-          </Button>
-        )}
-        <Button variant="ghost" size="icon" onClick={handleDownload}>
-          <Download className="h-4 w-4" />
-        </Button>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Trash2 className="h-4 w-4 text-destructive" />
-            </Button>
-          </AlertDialogTrigger>
+  if (viewMode === "grid") {
+    return (
+      <>
+        <div className="group relative flex flex-col items-center p-4 rounded-lg border hover:bg-muted/50 transition-colors">
+          {/* Dropdown Menu */}
+          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {isImage && (
+                  <DropdownMenuItem onClick={handleDownload}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    Visualizar
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem onClick={handleDownload}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Download
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setMoveDialogOpen(true)}>
+                  <FolderInput className="mr-2 h-4 w-4" />
+                  Mover
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => setDeleteDialogOpen(true)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Excluir
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {/* Icon/Preview */}
+          <div className="mb-3">
+            {isImage ? (
+              <img
+                src={arquivo.arquivo_url}
+                alt={arquivo.nome}
+                className="h-20 w-20 object-cover rounded"
+              />
+            ) : (
+              <Icon className="h-16 w-16 text-muted-foreground" />
+            )}
+          </div>
+
+          {/* Info */}
+          <p className="font-medium text-sm text-center truncate w-full">{arquivo.nome}</p>
+          <p className="text-xs text-muted-foreground">{formatSize(arquivo.tamanho)}</p>
+        </div>
+
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Excluir Arquivo?</AlertDialogTitle>
@@ -92,13 +141,107 @@ export function ArquivoItem({ arquivo }: ArquivoItemProps) {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              <AlertDialogAction
+                onClick={handleDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
                 Excluir
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <MoveArquivoDialog
+          open={moveDialogOpen}
+          onOpenChange={setMoveDialogOpen}
+          arquivoId={arquivo.id}
+          arquivoNome={arquivo.nome}
+          obraId={obraId}
+          currentPastaId={arquivo.pasta_id}
+        />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div className="group flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+        <div className="flex-shrink-0">
+          {isImage ? (
+            <img
+              src={arquivo.arquivo_url}
+              alt={arquivo.nome}
+              className="h-10 w-10 object-cover rounded"
+            />
+          ) : (
+            <Icon className="h-8 w-8 text-muted-foreground" />
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-medium truncate">{arquivo.nome}</p>
+          <p className="text-sm text-muted-foreground">{formatSize(arquivo.tamanho)}</p>
+        </div>
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {isImage && (
+            <Button variant="ghost" size="icon" onClick={handleDownload}>
+              <Eye className="h-4 w-4" />
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" onClick={handleDownload}>
+            <Download className="h-4 w-4" />
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setMoveDialogOpen(true)}>
+                <FolderInput className="mr-2 h-4 w-4" />
+                Mover para...
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => setDeleteDialogOpen(true)}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Excluir
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
-    </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Arquivo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação irá excluir o arquivo "{arquivo.nome}". Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <MoveArquivoDialog
+        open={moveDialogOpen}
+        onOpenChange={setMoveDialogOpen}
+        arquivoId={arquivo.id}
+        arquivoNome={arquivo.nome}
+        obraId={obraId}
+        currentPastaId={arquivo.pasta_id}
+      />
+    </>
   );
 }

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,11 +10,12 @@ import { PastaItem } from "@/components/PastaItem";
 import { ArquivoItem } from "@/components/ArquivoItem";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronLeft, Home, ChevronRight, Folder, FileX } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { ChevronLeft, Home, ChevronRight, Folder, FileX, LayoutGrid, List } from "lucide-react";
 import type { Obra } from "@/hooks/useObras";
-
 const ObraDetail = () => {
   const { obraId, pastaId } = useParams<{ obraId: string; pastaId?: string }>();
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
   const { data: obra, isLoading: obraLoading } = useQuery({
     queryKey: ["obra", obraId],
@@ -109,9 +111,23 @@ const ObraDetail = () => {
         </nav>
 
         {/* Actions */}
-        <div className="flex items-center gap-3 mb-6">
-          <CreatePastaDialog obraId={obraId!} pastaPaiId={pastaId} />
-          <UploadArquivoDialog obraId={obraId!} pastaId={pastaId} />
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <CreatePastaDialog obraId={obraId!} pastaPaiId={pastaId} />
+            <UploadArquivoDialog obraId={obraId!} pastaId={pastaId} />
+          </div>
+          <ToggleGroup
+            type="single"
+            value={viewMode}
+            onValueChange={(value) => value && setViewMode(value as "list" | "grid")}
+          >
+            <ToggleGroupItem value="list" aria-label="Visualização em lista">
+              <List className="h-4 w-4" />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="grid" aria-label="Visualização em grade">
+              <LayoutGrid className="h-4 w-4" />
+            </ToggleGroupItem>
+          </ToggleGroup>
         </div>
 
         {/* Content */}
@@ -139,9 +155,15 @@ const ObraDetail = () => {
             {arquivos && arquivos.length > 0 && (
               <div>
                 <h2 className="text-sm font-medium text-muted-foreground mb-3">Arquivos</h2>
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                <div
+                  className={
+                    viewMode === "grid"
+                      ? "grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+                      : "grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
+                  }
+                >
                   {arquivos.map((arquivo) => (
-                    <ArquivoItem key={arquivo.id} arquivo={arquivo} />
+                    <ArquivoItem key={arquivo.id} arquivo={arquivo} obraId={obraId!} viewMode={viewMode} />
                   ))}
                 </div>
               </div>
