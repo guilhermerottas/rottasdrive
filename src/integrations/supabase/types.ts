@@ -14,7 +14,123 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      arquivos: {
+        Row: {
+          arquivo_url: string
+          created_at: string
+          id: string
+          nome: string
+          obra_id: string
+          pasta_id: string | null
+          tamanho: number | null
+          tipo: string | null
+          updated_at: string
+        }
+        Insert: {
+          arquivo_url: string
+          created_at?: string
+          id?: string
+          nome: string
+          obra_id: string
+          pasta_id?: string | null
+          tamanho?: number | null
+          tipo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          arquivo_url?: string
+          created_at?: string
+          id?: string
+          nome?: string
+          obra_id?: string
+          pasta_id?: string | null
+          tamanho?: number | null
+          tipo?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arquivos_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "arquivos_pasta_id_fkey"
+            columns: ["pasta_id"]
+            isOneToOne: false
+            referencedRelation: "pastas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obras: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pastas: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          obra_id: string
+          pasta_pai_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          obra_id: string
+          pasta_pai_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          obra_id?: string
+          pasta_pai_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pastas_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pastas_pasta_pai_id_fkey"
+            columns: ["pasta_pai_id"]
+            isOneToOne: false
+            referencedRelation: "pastas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
