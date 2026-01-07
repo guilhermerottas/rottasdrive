@@ -1,6 +1,7 @@
 import { useObras } from "@/hooks/useObras";
 import { ObraCard } from "@/components/ObraCard";
 import { CreateObraDialog } from "@/components/CreateObraDialog";
+import { UserProfileButton } from "@/components/UserProfileButton";
 import { Building2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import logo from "@/assets/logo.png";
@@ -16,7 +17,10 @@ const Index = () => {
             <img src={logo} alt="Logo" style={{ width: 37, height: 37 }} />
             <h1 className="text-2xl font-bold">Armazenamento Rottas</h1>
           </div>
-          <CreateObraDialog />
+          <div className="flex items-center gap-3">
+            <CreateObraDialog />
+            <UserProfileButton />
+          </div>
         </header>
 
         {isLoading ? (
