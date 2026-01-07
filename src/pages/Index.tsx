@@ -3,6 +3,7 @@ import { ObraCard } from "@/components/ObraCard";
 import { CreateObraDialog } from "@/components/CreateObraDialog";
 import { Building2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import logo from "@/assets/logo.png";
 
 const Index = () => {
   const { data: obras, isLoading } = useObras();
@@ -12,9 +13,7 @@ const Index = () => {
       <div className="container mx-auto py-8 px-4">
         <header className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary rounded-lg">
-              <Building2 className="h-6 w-6 text-primary-foreground" />
-            </div>
+            <img src={logo} alt="Logo" className="h-6 w-6" />
             <h1 className="text-2xl font-bold">Armazenamento Rottas</h1>
           </div>
           <CreateObraDialog />
