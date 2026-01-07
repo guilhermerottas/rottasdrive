@@ -34,6 +34,22 @@ export function usePastas(obraId: string, pastaPaiId?: string | null) {
   });
 }
 
+export function useAllPastas(obraId: string) {
+  return useQuery({
+    queryKey: ["all-pastas", obraId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pastas")
+        .select("*")
+        .eq("obra_id", obraId)
+        .order("nome", { ascending: true });
+      if (error) throw error;
+      return data as Pasta[];
+    },
+    enabled: !!obraId,
+  });
+}
+
 export function useCreatePasta() {
   const queryClient = useQueryClient();
 

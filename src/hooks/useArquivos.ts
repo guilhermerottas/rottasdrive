@@ -106,3 +106,20 @@ export function useDeleteArquivo() {
     },
   });
 }
+
+export function useMoveArquivo() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, pastaId }: { id: string; pastaId: string | null }) => {
+      const { error } = await supabase
+        .from("arquivos")
+        .update({ pasta_id: pastaId })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["arquivos"] });
+    },
+  });
+}
