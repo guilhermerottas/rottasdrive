@@ -7,17 +7,19 @@ import { useArquivos, useMoveArquivo } from "@/hooks/useArquivos";
 import { toast } from "sonner";
 import { CreatePastaDialog } from "@/components/CreatePastaDialog";
 import { UploadArquivoDialog } from "@/components/UploadArquivoDialog";
+import { EditObraDialog } from "@/components/EditObraDialog";
 import { PastaItem } from "@/components/PastaItem";
 import { ArquivoItem } from "@/components/ArquivoItem";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { ChevronLeft, Home, ChevronRight, Folder, FileX, LayoutGrid, List } from "lucide-react";
+import { ChevronLeft, Home, ChevronRight, Folder, FileX, LayoutGrid, List, MapPin, Pencil, Building2 } from "lucide-react";
 import type { Obra } from "@/hooks/useObras";
 const ObraDetail = () => {
   const { obraId, pastaId } = useParams<{ obraId: string; pastaId?: string }>();
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [isDragOverRoot, setIsDragOverRoot] = useState(false);
+  const [editObraOpen, setEditObraOpen] = useState(false);
   const moveArquivo = useMoveArquivo();
 
   const { data: obra, isLoading: obraLoading } = useQuery({
@@ -72,7 +74,7 @@ const ObraDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto py-8 px-4">
-        {/* Header */}
+        {/* Header with obra info */}
         <div className="mb-6">
           <Link to="/">
             <Button variant="ghost" size="sm" className="mb-4">
@@ -80,10 +82,45 @@ const ObraDetail = () => {
               Voltar às Obras
             </Button>
           </Link>
-          <h1 className="text-2xl font-bold">{obra.nome}</h1>
-          {obra.descricao && (
-            <p className="text-muted-foreground mt-1">{obra.descricao}</p>
-          )}
+          
+          <div className="flex items-start gap-4">
+            {/* Obra Photo */}
+            <div className="h-20 w-20 rounded-lg overflow-hidden bg-muted flex-shrink-0 flex items-center justify-center">
+              {obra.foto_url ? (
+                <img 
+                  src={obra.foto_url} 
+                  alt={obra.nome} 
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <Building2 className="h-10 w-10 text-muted-foreground" />
+              )}
+            </div>
+            
+            {/* Obra Info */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold truncate">{obra.nome}</h1>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8"
+                  onClick={() => setEditObraOpen(true)}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              </div>
+              {obra.endereco && (
+                <p className="text-muted-foreground mt-1 flex items-center gap-1">
+                  <MapPin className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">{obra.endereco}</span>
+                </p>
+              )}
+              {obra.descricao && (
+                <p className="text-muted-foreground mt-1 line-clamp-2">{obra.descricao}</p>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Breadcrumb - also drop target for root */}
@@ -214,6 +251,8 @@ const ObraDetail = () => {
           </>
         )}
       </div>
+
+      <EditObraDialog open={editObraOpen} onOpenChange={setEditObraOpen} obra={obra} />
     </div>
   );
 };

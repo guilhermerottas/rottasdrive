@@ -1,29 +1,43 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Plus, Camera, X } from "lucide-react";
-import { useCreateObra } from "@/hooks/useObras";
+import { Camera, X } from "lucide-react";
+import { useUpdateObra, Obra } from "@/hooks/useObras";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-export function CreateObraDialog() {
-  const [open, setOpen] = useState(false);
-  const [nome, setNome] = useState("");
-  const [descricao, setDescricao] = useState("");
-  const [endereco, setEndereco] = useState("");
-  const [fotoPreview, setFotoPreview] = useState<string | null>(null);
+interface EditObraDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  obra: Obra;
+}
+
+export function EditObraDialog({ open, onOpenChange, obra }: EditObraDialogProps) {
+  const [nome, setNome] = useState(obra.nome);
+  const [descricao, setDescricao] = useState(obra.descricao || "");
+  const [endereco, setEndereco] = useState(obra.endereco || "");
+  const [fotoPreview, setFotoPreview] = useState<string | null>(obra.foto_url);
   const [fotoFile, setFotoFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const createObra = useCreateObra();
+  const updateObra = useUpdateObra();
+
+  useEffect(() => {
+    if (open) {
+      setNome(obra.nome);
+      setDescricao(obra.descricao || "");
+      setEndereco(obra.endereco || "");
+      setFotoPreview(obra.foto_url);
+      setFotoFile(null);
+    }
+  }, [open, obra]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -49,14 +63,6 @@ export function CreateObraDialog() {
     }
   };
 
-  const resetForm = () => {
-    setNome("");
-    setDescricao("");
-    setEndereco("");
-    setFotoFile(null);
-    setFotoPreview(null);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedNome = nome.trim();
@@ -72,34 +78,26 @@ export function CreateObraDialog() {
     }
 
     try {
-      await createObra.mutateAsync({ 
+      await updateObra.mutateAsync({ 
+        id: obra.id,
         nome: trimmedNome, 
         descricao: descricao.trim() || undefined,
         endereco: endereco.trim() || undefined,
-        foto: fotoFile || undefined
+        foto: fotoFile || undefined,
+        currentFotoUrl: fotoFile ? obra.foto_url : (fotoPreview ? obra.foto_url : null)
       });
-      toast.success("Obra criada com sucesso!");
-      resetForm();
-      setOpen(false);
+      toast.success("Obra atualizada com sucesso!");
+      onOpenChange(false);
     } catch (error) {
-      toast.error("Erro ao criar obra");
+      toast.error("Erro ao atualizar obra");
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={(newOpen) => {
-      setOpen(newOpen);
-      if (!newOpen) resetForm();
-    }}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Nova Obra
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Criar Nova Obra</DialogTitle>
+          <DialogTitle>Editar Obra</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Photo Upload */}
@@ -182,9 +180,14 @@ export function CreateObraDialog() {
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={createObra.isPending}>
-            {createObra.isPending ? "Criando..." : "Criar Obra"}
-          </Button>
+          <div className="flex gap-3 pt-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
+              Cancelar
+            </Button>
+            <Button type="submit" className="flex-1" disabled={updateObra.isPending}>
+              {updateObra.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>
