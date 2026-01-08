@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export type PastaColor = "default" | "blue" | "purple" | "green" | "yellow" | "red" | "pink";
+export type PastaColor = "default" | "documents" | "photos" | "videos" | "music";
 
 export interface Pasta {
   id: string;
@@ -103,24 +103,6 @@ export function useUpdatePastaColor() {
       const { error } = await supabase
         .from("pastas")
         .update({ cor })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pastas"] });
-      queryClient.invalidateQueries({ queryKey: ["all-pastas"] });
-    },
-  });
-}
-
-export function useRenamePasta() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, nome }: { id: string; nome: string }) => {
-      const { error } = await supabase
-        .from("pastas")
-        .update({ nome })
         .eq("id", id);
       if (error) throw error;
     },

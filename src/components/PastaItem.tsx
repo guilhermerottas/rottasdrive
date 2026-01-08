@@ -1,18 +1,10 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Folder, MoreVertical, Pencil, Palette, Trash2, Check } from "lucide-react";
-import { Pasta, PastaColor, useDeletePasta, useUpdatePastaColor, useRenamePasta } from "@/hooks/usePastas";
+import { Trash2, Palette } from "lucide-react";
+import { Pasta, PastaColor, useDeletePasta, useUpdatePastaColor } from "@/hooks/usePastas";
 import { useMoveArquivo } from "@/hooks/useArquivos";
 import { toast } from "sonner";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,87 +14,78 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 interface PastaItemProps {
   pasta: Pasta;
-  fileCount?: number;
 }
 
-const colorOptions: { value: PastaColor; label: string; color: string; bgLight: string }[] = [
-  { value: "blue", label: "Azul", color: "bg-[#4A9EFF]", bgLight: "bg-[#E8F4FF]" },
-  { value: "purple", label: "Roxo", color: "bg-[#9747FF]", bgLight: "bg-[#F3E8FF]" },
-  { value: "green", label: "Verde", color: "bg-[#34C759]", bgLight: "bg-[#E8F8EC]" },
-  { value: "yellow", label: "Amarelo", color: "bg-[#FFB800]", bgLight: "bg-[#FFF8E6]" },
-  { value: "default", label: "Laranja", color: "bg-[#F49B0B]", bgLight: "bg-[#FFF4E6]" },
-  { value: "red", label: "Vermelho", color: "bg-[#FF3B30]", bgLight: "bg-[#FFE8E6]" },
-  { value: "pink", label: "Rosa", color: "bg-[#FF2D92]", bgLight: "bg-[#FFE8F4]" },
-];
-
-const getColorStyles = (cor: PastaColor) => {
-  const option = colorOptions.find(o => o.value === cor) || colorOptions[4]; // default to orange
-  return option;
+const folderVariants = {
+  documents: {
+    backColor: "bg-[#4DB8FF]",
+    frontGradient: "bg-gradient-to-br from-white to-[#E6F7FF]",
+    shadow: "shadow-[0_8px_24px_rgba(77,184,255,0.3)]",
+    tabColor: "bg-[#4DB8FF]",
+  },
+  photos: {
+    backColor: "bg-[#34C759]",
+    frontGradient: "bg-gradient-to-br from-white to-[#E8F8EC]",
+    shadow: "shadow-[0_8px_24px_rgba(52,199,89,0.3)]",
+    tabColor: "bg-[#34C759]",
+  },
+  videos: {
+    backColor: "bg-[#FFB800]",
+    frontGradient: "bg-gradient-to-br from-white to-[#FFF8E6]",
+    shadow: "shadow-[0_8px_24px_rgba(255,184,0,0.3)]",
+    tabColor: "bg-[#FFB800]",
+  },
+  music: {
+    backColor: "bg-[#9747FF]",
+    frontGradient: "bg-gradient-to-br from-white to-[#F3E8FF]",
+    shadow: "shadow-[0_8px_24px_rgba(151,71,255,0.3)]",
+    tabColor: "bg-[#9747FF]",
+  },
+  default: {
+    backColor: "bg-primary",
+    frontGradient: "bg-gradient-to-br from-white to-primary-light",
+    shadow: "shadow-[0_8px_24px_rgba(244,155,11,0.3)]",
+    tabColor: "bg-primary",
+  },
 };
 
-export function PastaItem({ pasta, fileCount = 0 }: PastaItemProps) {
+const colorOptions: { value: PastaColor; label: string; color: string }[] = [
+  { value: "default", label: "Laranja", color: "bg-primary" },
+  { value: "documents", label: "Azul", color: "bg-[#4DB8FF]" },
+  { value: "photos", label: "Verde", color: "bg-[#34C759]" },
+  { value: "videos", label: "Amarelo", color: "bg-[#FFB800]" },
+  { value: "music", label: "Roxo", color: "bg-[#9747FF]" },
+];
+
+export function PastaItem({ pasta }: PastaItemProps) {
   const [isDragOver, setIsDragOver] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showRenameDialog, setShowRenameDialog] = useState(false);
-  const [showColorPicker, setShowColorPicker] = useState(false);
-  const [newName, setNewName] = useState(pasta.nome);
-  const inputRef = useRef<HTMLInputElement>(null);
-  
+  const [isPressed, setIsPressed] = useState(false);
+  const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const deletePasta = useDeletePasta();
   const moveArquivo = useMoveArquivo();
   const updateColor = useUpdatePastaColor();
-  const renamePasta = useRenamePasta();
 
   const currentColor = (pasta.cor as PastaColor) || "default";
-  const colorStyle = getColorStyles(currentColor);
-
-  useEffect(() => {
-    if (showRenameDialog && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
-  }, [showRenameDialog]);
+  const styles = folderVariants[currentColor];
 
   const handleDelete = async () => {
     try {
       await deletePasta.mutateAsync(pasta.id);
       toast.success("Pasta excluída com sucesso!");
-      setShowDeleteDialog(false);
     } catch (error) {
       toast.error("Erro ao excluir pasta");
     }
-  };
-
-  const handleRename = async () => {
-    if (!newName.trim()) {
-      toast.error("Nome da pasta não pode ser vazio");
-      return;
-    }
-    try {
-      await renamePasta.mutateAsync({ id: pasta.id, nome: newName.trim() });
-      toast.success("Pasta renomeada com sucesso!");
-      setShowRenameDialog(false);
-    } catch (error) {
-      toast.error("Erro ao renomear pasta");
-    }
-  };
-
-  const handleColorChange = (cor: PastaColor) => {
-    updateColor.mutate({ id: pasta.id, cor });
-    setShowColorPicker(false);
-    toast.success("Cor alterada!");
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -134,174 +117,130 @@ export function PastaItem({ pasta, fileCount = 0 }: PastaItemProps) {
   };
 
   return (
-    <>
-      <div 
-        className={cn(
-          "group relative bg-card rounded-xl p-4 border border-border transition-all duration-200 cursor-pointer",
-          "hover:shadow-lg hover:-translate-y-0.5",
-          isDragOver && "ring-2 ring-primary border-primary shadow-lg"
-        )}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between mb-2">
-          {/* Folder Icon + Link */}
-          <Link
-            to={`/obra/${pasta.obra_id}/pasta/${pasta.id}`}
-            className="flex items-center gap-3 flex-1 min-w-0"
-          >
-            <div 
-              className={cn(
-                "w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0",
-                colorStyle.bgLight
-              )}
+    <div 
+      className="group relative w-[180px] h-[160px] cursor-pointer"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      onMouseDown={() => setIsPressed(true)}
+      onMouseUp={() => setIsPressed(false)}
+      onMouseLeave={() => setIsPressed(false)}
+    >
+      {/* Action Buttons */}
+      <div className="absolute -top-2 -right-2 z-20 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Color Picker */}
+        <Popover open={colorPickerOpen} onOpenChange={setColorPickerOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full bg-card border border-border shadow-sm hover:bg-accent"
+              onClick={(e) => e.stopPropagation()}
             >
-              <Folder 
-                className="w-5 h-5" 
-                style={{ color: colorStyle.color.replace("bg-[", "").replace("]", "") }}
-                fill="currentColor"
-              />
+              <Palette className="h-4 w-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-2" onClick={(e) => e.stopPropagation()}>
+            <div className="flex gap-2">
+              {colorOptions.map((option) => (
+                <button
+                  key={option.value}
+                  className={cn(
+                    "w-8 h-8 rounded-full border-2 transition-transform hover:scale-110",
+                    option.color,
+                    currentColor === option.value ? "border-foreground ring-2 ring-offset-2 ring-foreground" : "border-white"
+                  )}
+                  title={option.label}
+                  onClick={() => {
+                    updateColor.mutate({ id: pasta.id, cor: option.value });
+                    setColorPickerOpen(false);
+                  }}
+                />
+              ))}
             </div>
-            <div className="min-w-0 flex-1">
-              <h3 className="text-[15px] font-semibold text-foreground truncate">
-                {pasta.nome}
-              </h3>
-              <p className="text-[13px] text-muted-foreground">
-                {fileCount} {fileCount === 1 ? "arquivo" : "arquivos"}
-              </p>
-            </div>
-          </Link>
+          </PopoverContent>
+        </Popover>
 
-          {/* Menu Button */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setNewName(pasta.nome);
-                  setShowRenameDialog(true);
-                }}
-              >
-                <Pencil className="h-4 w-4 mr-3" />
-                Renomear
-              </DropdownMenuItem>
-              
-              <DropdownMenuItem 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowColorPicker(!showColorPicker);
-                }}
-              >
-                <Palette className="h-4 w-4 mr-3" />
-                Mudar Cor
-              </DropdownMenuItem>
-
-              {showColorPicker && (
-                <div className="px-3 py-2 flex flex-wrap gap-2">
-                  {colorOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      className={cn(
-                        "w-7 h-7 rounded-md border-2 transition-transform hover:scale-110 flex items-center justify-center",
-                        option.color,
-                        currentColor === option.value 
-                          ? "border-foreground" 
-                          : "border-transparent"
-                      )}
-                      title={option.label}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleColorChange(option.value);
-                      }}
-                    >
-                      {currentColor === option.value && (
-                        <Check className="h-4 w-4 text-white" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              <DropdownMenuSeparator />
-              
-              <DropdownMenuItem 
-                className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowDeleteDialog(true);
-                }}
-              >
-                <Trash2 className="h-4 w-4 mr-3" />
+        {/* Delete Button */}
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full bg-card border border-border shadow-sm hover:bg-destructive hover:text-white"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir Pasta?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta ação irá excluir a pasta "{pasta.nome}" e todo seu conteúdo. Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                 Excluir
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Excluir Pasta?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta ação irá excluir a pasta "{pasta.nome}" e todo seu conteúdo. 
-              Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDelete} 
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Rename Dialog */}
-      <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Renomear Pasta</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <Input
-              ref={inputRef}
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              placeholder="Nome da pasta"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleRename();
-                }
-              }}
-            />
+      <Link
+        to={`/obra/${pasta.obra_id}/pasta/${pasta.id}`}
+        className={cn(
+          "block w-full h-full transition-transform duration-300 ease-out",
+          isDragOver ? "scale-105" : "",
+          isPressed ? "scale-95" : "hover:-translate-y-2"
+        )}
+      >
+        {/* Folder Structure */}
+        <div className="relative w-full h-[120px]">
+          {/* Folder Tab */}
+          <div 
+            className={cn(
+              "absolute -top-2 right-5 w-[60px] h-[20px] rounded-t-lg z-0",
+              styles.tabColor
+            )}
+          />
+          
+          {/* Folder Back */}
+          <div 
+            className={cn(
+              "absolute top-0 right-0 w-[150px] h-[100px] rounded-2xl z-[1]",
+              styles.backColor,
+              styles.shadow,
+              isDragOver && "ring-2 ring-white ring-offset-2"
+            )}
+          />
+          
+          {/* Folder Front (Glassmorphism) */}
+          <div 
+            className={cn(
+              "absolute top-5 left-0 w-[160px] h-[90px] rounded-2xl z-[2] border-[3px] border-white",
+              styles.frontGradient,
+              "backdrop-blur-sm",
+              "shadow-[0_4px_16px_rgba(0,0,0,0.08)]"
+            )}
+          >
+            {/* Glass Shine Effect */}
+            <div className="absolute inset-0 rounded-2xl overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/40 to-transparent" />
+            </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRenameDialog(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleRename}>
-              Salvar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+        </div>
+
+        {/* Folder Label */}
+        <div className="absolute bottom-0 left-0 right-0 text-center px-2">
+          <span className="text-sm font-semibold text-foreground truncate block">
+            {pasta.nome}
+          </span>
+        </div>
+      </Link>
+    </div>
   );
 }
