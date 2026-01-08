@@ -1,12 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
-import { Building2, LayoutDashboard } from "lucide-react";
+import { Building2, Star, User } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { cn } from "@/lib/utils";
 import { StorageGauge } from "@/components/StorageGauge";
 
 const menuItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Obras", url: "/obras", icon: Building2 },
+  { title: "Obras", url: "/", icon: Building2 },
+  { title: "Favoritos", url: "/favoritos", icon: Star },
+  { title: "Perfil", url: "/perfil", icon: User },
 ];
 
 export function AppSidebar() {
@@ -23,7 +24,8 @@ export function AppSidebar() {
         <ul className="space-y-2">
           {menuItems.map((item) => {
             const isActive = location.pathname === item.url || 
-              (item.url === "/" && location.pathname === "/");
+              (item.url === "/" && location.pathname === "/") ||
+              (item.url !== "/" && location.pathname.startsWith(item.url));
             
             return (
               <li key={item.title}>

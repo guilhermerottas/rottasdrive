@@ -14,10 +14,11 @@ import {
   Share2,
   Mail,
   MessageCircle,
-  Instagram,
   Link,
+  Star,
 } from "lucide-react";
 import { Arquivo, useDeleteArquivo } from "@/hooks/useArquivos";
+import { useIsFavorito, useToggleFavorito } from "@/hooks/useFavoritos";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -47,6 +48,7 @@ interface ArquivoItemProps {
   arquivo: Arquivo;
   obraId: string;
   viewMode: "list" | "grid";
+  onView?: () => void;
 }
 
 const getFileIcon = (tipo: string | null) => {
@@ -64,13 +66,19 @@ const formatSize = (bytes: number | null) => {
   return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 };
 
-export function ArquivoItem({ arquivo, obraId, viewMode }: ArquivoItemProps) {
+export function ArquivoItem({ arquivo, obraId, viewMode, onView }: ArquivoItemProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const deleteArquivo = useDeleteArquivo();
+  const { data: isFavorito } = useIsFavorito(arquivo.id);
+  const toggleFavorito = useToggleFavorito();
   const Icon = getFileIcon(arquivo.tipo);
   const isImage = arquivo.tipo?.startsWith("image/");
+
+  const handleToggleFavorito = () => {
+    toggleFavorito.mutate({ arquivoId: arquivo.id, isFavorito: !!isFavorito });
+  };
 
   const handleDelete = async () => {
     try {
@@ -131,25 +139,44 @@ export function ArquivoItem({ arquivo, obraId, viewMode }: ArquivoItemProps) {
     return (
       <>
         <div 
-          className="group relative flex flex-col items-center p-4 rounded-lg border hover:bg-muted/50 transition-colors cursor-grab active:cursor-grabbing"
-          draggable
-          onDragStart={handleDragStart}
+          className="group relative flex flex-col items-center p-4 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
+          onClick={onView}
         >
+          {/* Favorite button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-2 left-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleToggleFavorito();
+            }}
+          >
+            <Star
+              className={cn(
+                "h-4 w-4",
+                isFavorito ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
+              )}
+            />
+          </Button>
+
           {/* Dropdown Menu */}
           <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                {isImage && (
-                  <DropdownMenuItem onClick={handleDownload}>
-                    <Eye className="mr-2 h-4 w-4" />
-                    Visualizar
-                  </DropdownMenuItem>
-                )}
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onView?.(); }}>
+                  <Eye className="mr-2 h-4 w-4" />
+                  Visualizar
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleToggleFavorito(); }}>
+                  <Star className={cn("mr-2 h-4 w-4", isFavorito && "fill-yellow-400 text-yellow-400")} />
+                  {isFavorito ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                </DropdownMenuItem>
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
                     <Share2 className="mr-2 h-4 w-4" />
@@ -255,11 +282,10 @@ export function ArquivoItem({ arquivo, obraId, viewMode }: ArquivoItemProps) {
   return (
     <>
       <div 
-        className="group flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors cursor-grab active:cursor-grabbing"
-        draggable
-        onDragStart={handleDragStart}
+        className="group flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
+        onClick={onView}
       >
-        <div className="flex-shrink-0 pointer-events-none">
+        <div className="flex-shrink-0">
           {isImage ? (
             <img
               src={arquivo.arquivo_url}
@@ -270,17 +296,18 @@ export function ArquivoItem({ arquivo, obraId, viewMode }: ArquivoItemProps) {
             <Icon className="h-8 w-8 text-muted-foreground" />
           )}
         </div>
-        <div className="flex-1 min-w-0 pointer-events-none">
+        <div className="flex-1 min-w-0">
           <p className="font-medium truncate">{arquivo.nome}</p>
           <p className="text-sm text-muted-foreground">{formatSize(arquivo.tamanho)}</p>
         </div>
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          {isImage && (
-            <Button variant="ghost" size="icon" onClick={handleDownload}>
-              <Eye className="h-4 w-4" />
-            </Button>
-          )}
-          <Button variant="ghost" size="icon" onClick={handleDownload}>
+          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleToggleFavorito(); }}>
+            <Star className={cn("h-4 w-4", isFavorito ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground")} />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onView?.(); }}>
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleDownload(); }}>
             <Download className="h-4 w-4" />
           </Button>
           <DropdownMenu>

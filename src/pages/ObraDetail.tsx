@@ -3,17 +3,18 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { usePastas, usePastaBreadcrumb } from "@/hooks/usePastas";
-import { useArquivos, useMoveArquivo } from "@/hooks/useArquivos";
+import { useArquivos, useMoveArquivo, Arquivo } from "@/hooks/useArquivos";
 import { toast } from "sonner";
 import { CreatePastaDialog } from "@/components/CreatePastaDialog";
 import { UploadArquivoDialog } from "@/components/UploadArquivoDialog";
 import { EditObraDialog } from "@/components/EditObraDialog";
 import { PastaItem } from "@/components/PastaItem";
 import { ArquivoItem } from "@/components/ArquivoItem";
+import { FileViewer } from "@/components/FileViewer";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { ChevronLeft, Home, ChevronRight, Folder, FileX, LayoutGrid, List, MapPin, Pencil, Building2, FolderPlus } from "lucide-react";
+import { ChevronLeft, Home, ChevronRight, Folder, FileX, LayoutGrid, List, MapPin, Pencil, Building2 } from "lucide-react";
 import type { Obra } from "@/hooks/useObras";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AppHeader } from "@/components/layout/AppHeader";
@@ -25,6 +26,8 @@ const ObraDetail = () => {
   const [editObraOpen, setEditObraOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
+  const [selectedArquivo, setSelectedArquivo] = useState<Arquivo | null>(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
   const moveArquivo = useMoveArquivo();
 
   const { data: obra, isLoading: obraLoading } = useQuery({
@@ -259,7 +262,16 @@ const ObraDetail = () => {
                   }
                 >
                   {filteredArquivos.map((arquivo) => (
-                    <ArquivoItem key={arquivo.id} arquivo={arquivo} obraId={obraId!} viewMode={viewMode} />
+                    <ArquivoItem 
+                      key={arquivo.id} 
+                      arquivo={arquivo} 
+                      obraId={obraId!} 
+                      viewMode={viewMode}
+                      onView={() => {
+                        setSelectedArquivo(arquivo);
+                        setViewerOpen(true);
+                      }}
+                    />
                   ))}
                 </div>
               </div>
@@ -281,6 +293,13 @@ const ObraDetail = () => {
 
       <UploadArquivoDialog obraId={obraId!} pastaId={pastaId} open={uploadOpen} onOpenChange={setUploadOpen} showTrigger={false} />
       <EditObraDialog open={editObraOpen} onOpenChange={setEditObraOpen} obra={obra} />
+      <FileViewer
+        arquivo={selectedArquivo}
+        open={viewerOpen}
+        onOpenChange={setViewerOpen}
+        arquivos={filteredArquivos || []}
+        onNavigate={setSelectedArquivo}
+      />
     </AppLayout>
   );
 };
