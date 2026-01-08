@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Building2, LayoutDashboard } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { cn } from "@/lib/utils";
+import { StorageGauge } from "@/components/StorageGauge";
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
@@ -43,6 +44,8 @@ export function AppSidebar() {
           })}
         </ul>
       </nav>
+
+      <StorageGauge />
     </aside>
   );
 }
