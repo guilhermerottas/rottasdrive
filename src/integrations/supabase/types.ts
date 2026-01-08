@@ -65,6 +65,35 @@ export type Database = {
           },
         ]
       }
+      favoritos: {
+        Row: {
+          arquivo_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          arquivo_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          arquivo_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favoritos_arquivo_id_fkey"
+            columns: ["arquivo_id"]
+            isOneToOne: false
+            referencedRelation: "arquivos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invites: {
         Row: {
           created_at: string

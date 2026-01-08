@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuthContext } from "@/components/AuthProvider";
 import Index from "./pages/Index";
 import ObraDetail from "./pages/ObraDetail";
+import Favoritos from "./pages/Favoritos";
+import Perfil from "./pages/Perfil";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -51,6 +53,8 @@ const AppRoutes = () => (
   <Routes>
     <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
     <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+    <Route path="/favoritos" element={<ProtectedRoute><Favoritos /></ProtectedRoute>} />
+    <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
     <Route path="/obra/:obraId" element={<ProtectedRoute><ObraDetail /></ProtectedRoute>} />
     <Route path="/obra/:obraId/pasta/:pastaId" element={<ProtectedRoute><ObraDetail /></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
