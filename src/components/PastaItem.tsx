@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
-import { Pasta, useDeletePasta } from "@/hooks/usePastas";
+import { Trash2, Palette } from "lucide-react";
+import { Pasta, PastaColor, useDeletePasta, useUpdatePastaColor } from "@/hooks/usePastas";
 import { useMoveArquivo } from "@/hooks/useArquivos";
 import { toast } from "sonner";
 import {
@@ -16,11 +16,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 interface PastaItemProps {
   pasta: Pasta;
-  variant?: "documents" | "photos" | "videos" | "music" | "default";
 }
 
 const folderVariants = {
@@ -56,13 +60,24 @@ const folderVariants = {
   },
 };
 
-export function PastaItem({ pasta, variant = "default" }: PastaItemProps) {
+const colorOptions: { value: PastaColor; label: string; color: string }[] = [
+  { value: "default", label: "Laranja", color: "bg-primary" },
+  { value: "documents", label: "Azul", color: "bg-[#4DB8FF]" },
+  { value: "photos", label: "Verde", color: "bg-[#34C759]" },
+  { value: "videos", label: "Amarelo", color: "bg-[#FFB800]" },
+  { value: "music", label: "Roxo", color: "bg-[#9747FF]" },
+];
+
+export function PastaItem({ pasta }: PastaItemProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
+  const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const deletePasta = useDeletePasta();
   const moveArquivo = useMoveArquivo();
+  const updateColor = useUpdatePastaColor();
 
-  const styles = folderVariants[variant];
+  const currentColor = (pasta.cor as PastaColor) || "default";
+  const styles = folderVariants[currentColor];
 
   const handleDelete = async () => {
     try {
@@ -111,33 +126,69 @@ export function PastaItem({ pasta, variant = "default" }: PastaItemProps) {
       onMouseUp={() => setIsPressed(false)}
       onMouseLeave={() => setIsPressed(false)}
     >
-      {/* Delete Button */}
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute -top-2 -right-2 z-20 h-8 w-8 rounded-full bg-card border border-border opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:bg-destructive hover:text-white"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Excluir Pasta?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta ação irá excluir a pasta "{pasta.nome}" e todo seu conteúdo. Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Action Buttons */}
+      <div className="absolute -top-2 -right-2 z-20 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Color Picker */}
+        <Popover open={colorPickerOpen} onOpenChange={setColorPickerOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full bg-card border border-border shadow-sm hover:bg-accent"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Palette className="h-4 w-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-2" onClick={(e) => e.stopPropagation()}>
+            <div className="flex gap-2">
+              {colorOptions.map((option) => (
+                <button
+                  key={option.value}
+                  className={cn(
+                    "w-8 h-8 rounded-full border-2 transition-transform hover:scale-110",
+                    option.color,
+                    currentColor === option.value ? "border-foreground ring-2 ring-offset-2 ring-foreground" : "border-white"
+                  )}
+                  title={option.label}
+                  onClick={() => {
+                    updateColor.mutate({ id: pasta.id, cor: option.value });
+                    setColorPickerOpen(false);
+                  }}
+                />
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        {/* Delete Button */}
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full bg-card border border-border shadow-sm hover:bg-destructive hover:text-white"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir Pasta?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta ação irá excluir a pasta "{pasta.nome}" e todo seu conteúdo. Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
 
       <Link
         to={`/obra/${pasta.obra_id}/pasta/${pasta.id}`}
