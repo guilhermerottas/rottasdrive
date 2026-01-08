@@ -29,34 +29,34 @@ interface PastaItemProps {
 
 const folderVariants = {
   documents: {
-    backColor: "bg-[#4DB8FF]",
-    frontGradient: "bg-gradient-to-br from-white to-[#E6F7FF]",
-    shadow: "shadow-[0_8px_24px_rgba(77,184,255,0.3)]",
-    tabColor: "bg-[#4DB8FF]",
+    bodyGradient: "bg-gradient-to-br from-[#B3E0FF] via-[#7EC8FF] to-[#4A9EFF]",
+    tabGradient: "bg-gradient-to-b from-[#4A9EFF] to-[#3B8FEF]",
+    shadow: "shadow-[0_8px_24px_rgba(74,158,255,0.35)]",
+    bottomGlow: "bg-[radial-gradient(ellipse,rgba(74,158,255,0.4)_0%,transparent_70%)]",
   },
   photos: {
-    backColor: "bg-[#34C759]",
-    frontGradient: "bg-gradient-to-br from-white to-[#E8F8EC]",
-    shadow: "shadow-[0_8px_24px_rgba(52,199,89,0.3)]",
-    tabColor: "bg-[#34C759]",
+    bodyGradient: "bg-gradient-to-br from-[#99E6A3] via-[#66D97E] to-[#34C759]",
+    tabGradient: "bg-gradient-to-b from-[#34C759] to-[#2DB84E]",
+    shadow: "shadow-[0_8px_24px_rgba(52,199,89,0.35)]",
+    bottomGlow: "bg-[radial-gradient(ellipse,rgba(52,199,89,0.4)_0%,transparent_70%)]",
   },
   videos: {
-    backColor: "bg-[#FFB800]",
-    frontGradient: "bg-gradient-to-br from-white to-[#FFF8E6]",
-    shadow: "shadow-[0_8px_24px_rgba(255,184,0,0.3)]",
-    tabColor: "bg-[#FFB800]",
+    bodyGradient: "bg-gradient-to-br from-[#FFDB66] via-[#FFC933] to-[#FFB800]",
+    tabGradient: "bg-gradient-to-b from-[#FFB800] to-[#E5A600]",
+    shadow: "shadow-[0_8px_24px_rgba(255,184,0,0.35)]",
+    bottomGlow: "bg-[radial-gradient(ellipse,rgba(255,184,0,0.4)_0%,transparent_70%)]",
   },
   music: {
-    backColor: "bg-[#9747FF]",
-    frontGradient: "bg-gradient-to-br from-white to-[#F3E8FF]",
-    shadow: "shadow-[0_8px_24px_rgba(151,71,255,0.3)]",
-    tabColor: "bg-[#9747FF]",
+    bodyGradient: "bg-gradient-to-br from-[#D4B8FF] via-[#B88CFF] to-[#9747FF]",
+    tabGradient: "bg-gradient-to-b from-[#9747FF] to-[#8840E5]",
+    shadow: "shadow-[0_8px_24px_rgba(151,71,255,0.35)]",
+    bottomGlow: "bg-[radial-gradient(ellipse,rgba(151,71,255,0.4)_0%,transparent_70%)]",
   },
   default: {
-    backColor: "bg-primary",
-    frontGradient: "bg-gradient-to-br from-white to-primary-light",
-    shadow: "shadow-[0_8px_24px_rgba(244,155,11,0.3)]",
-    tabColor: "bg-primary",
+    bodyGradient: "bg-gradient-to-br from-[#FAC771] via-[#F7B13E] to-[#F49B0B]",
+    tabGradient: "bg-gradient-to-b from-[#F49B0B] to-[#D68609]",
+    shadow: "shadow-[0_8px_24px_rgba(244,155,11,0.35)]",
+    bottomGlow: "bg-[radial-gradient(ellipse,rgba(244,155,11,0.4)_0%,transparent_70%)]",
   },
 };
 
@@ -199,38 +199,39 @@ export function PastaItem({ pasta }: PastaItemProps) {
         )}
       >
         {/* Folder Structure */}
-        <div className="relative w-full h-[120px]">
+        <div className="relative w-[140px] h-[100px] mx-auto">
+          {/* Bottom Shadow/Glow */}
+          <div 
+            className={cn(
+              "absolute -bottom-1 left-[10px] right-[10px] h-2 blur-[4px] z-0",
+              styles.bottomGlow
+            )}
+          />
+          
           {/* Folder Tab */}
           <div 
             className={cn(
-              "absolute -top-2 right-5 w-[60px] h-[20px] rounded-t-lg z-0",
-              styles.tabColor
+              "absolute top-0 left-6 w-[50px] h-4 rounded-t-lg z-[1]",
+              styles.tabGradient,
+              "shadow-[inset_0_-2px_4px_rgba(0,0,0,0.1)]"
             )}
           />
           
-          {/* Folder Back */}
+          {/* Folder Body */}
           <div 
             className={cn(
-              "absolute top-0 right-0 w-[150px] h-[100px] rounded-2xl z-[1]",
-              styles.backColor,
+              "absolute top-3 left-0 w-[140px] h-[90px] rounded-xl z-[2] overflow-hidden",
+              styles.bodyGradient,
               styles.shadow,
+              "shadow-[inset_0_2px_8px_rgba(255,255,255,0.4),inset_0_-2px_8px_rgba(0,0,0,0.1)]",
               isDragOver && "ring-2 ring-white ring-offset-2"
             )}
-          />
-          
-          {/* Folder Front (Glassmorphism) */}
-          <div 
-            className={cn(
-              "absolute top-5 left-0 w-[160px] h-[90px] rounded-2xl z-[2] border-[3px] border-white",
-              styles.frontGradient,
-              "backdrop-blur-sm",
-              "shadow-[0_4px_16px_rgba(0,0,0,0.08)]"
-            )}
           >
-            {/* Glass Shine Effect */}
-            <div className="absolute inset-0 rounded-2xl overflow-hidden">
-              <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/40 to-transparent" />
-            </div>
+            {/* Glass Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/10 to-transparent z-[3]" />
+            
+            {/* Gloss Effect */}
+            <div className="absolute top-2 left-2 right-2 h-[30px] bg-gradient-to-b from-white/60 to-transparent rounded-lg z-[4]" />
           </div>
         </div>
 
