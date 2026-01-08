@@ -1,6 +1,6 @@
 import { Search, Upload } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
 import { UserProfileButton } from "@/components/UserProfileButton";
 
 interface AppHeaderProps {
@@ -33,10 +33,13 @@ export function AppHeader({
 
       <div className="flex items-center gap-4">
         {showUpload && onUploadClick && (
-          <Button onClick={onUploadClick} className="gap-2">
+          <HoverBorderGradient
+            onClick={onUploadClick}
+            className="flex items-center gap-2 text-sm font-medium"
+          >
             <Upload className="h-4 w-4" />
             Upload
-          </Button>
+          </HoverBorderGradient>
         )}
         <UserProfileButton />
       </div>
