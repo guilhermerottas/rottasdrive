@@ -11,6 +11,11 @@ import {
   MoreVertical,
   FolderInput,
   Pencil,
+  Share2,
+  Mail,
+  MessageCircle,
+  Instagram,
+  Link,
 } from "lucide-react";
 import { Arquivo, useDeleteArquivo } from "@/hooks/useArquivos";
 import { toast } from "sonner";
@@ -30,6 +35,9 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { MoveArquivoDialog } from "./MoveArquivoDialog";
 import { RenameArquivoDialog } from "./RenameArquivoDialog";
@@ -98,6 +106,27 @@ export function ArquivoItem({ arquivo, obraId, viewMode }: ArquivoItemProps) {
     e.dataTransfer.effectAllowed = "move";
   };
 
+  const handleShareWhatsApp = () => {
+    const url = encodeURIComponent(arquivo.arquivo_url);
+    const text = encodeURIComponent(`Confira este arquivo: ${arquivo.nome}`);
+    window.open(`https://wa.me/?text=${text}%20${url}`, "_blank");
+  };
+
+  const handleShareEmail = () => {
+    const subject = encodeURIComponent(`Arquivo: ${arquivo.nome}`);
+    const body = encodeURIComponent(`Confira este arquivo: ${arquivo.arquivo_url}`);
+    window.open(`mailto:?subject=${subject}&body=${body}`, "_blank");
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(arquivo.arquivo_url);
+      toast.success("Link copiado para a área de transferência!");
+    } catch (error) {
+      toast.error("Erro ao copiar link");
+    }
+  };
+
   if (viewMode === "grid") {
     return (
       <>
@@ -121,6 +150,26 @@ export function ArquivoItem({ arquivo, obraId, viewMode }: ArquivoItemProps) {
                     Visualizar
                   </DropdownMenuItem>
                 )}
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Compartilhar
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem onClick={handleShareWhatsApp}>
+                      <MessageCircle className="mr-2 h-4 w-4" />
+                      WhatsApp
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleShareEmail}>
+                      <Mail className="mr-2 h-4 w-4" />
+                      E-mail
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleCopyLink}>
+                      <Link className="mr-2 h-4 w-4" />
+                      Copiar Link
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
                 <DropdownMenuItem onClick={handleDownload}>
                   <Download className="mr-2 h-4 w-4" />
                   Download
@@ -249,6 +298,26 @@ export function ArquivoItem({ arquivo, obraId, viewMode }: ArquivoItemProps) {
                 <FolderInput className="mr-2 h-4 w-4" />
                 Mover para...
               </DropdownMenuItem>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <Share2 className="mr-2 h-4 w-4" />
+                  Compartilhar
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  <DropdownMenuItem onClick={handleShareWhatsApp}>
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    WhatsApp
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleShareEmail}>
+                    <Mail className="mr-2 h-4 w-4" />
+                    E-mail
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleCopyLink}>
+                    <Link className="mr-2 h-4 w-4" />
+                    Copiar Link
+                  </DropdownMenuItem>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => setDeleteDialogOpen(true)}
