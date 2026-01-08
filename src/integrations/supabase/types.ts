@@ -156,6 +156,7 @@ export type Database = {
       }
       pastas: {
         Row: {
+          cor: string | null
           created_at: string
           id: string
           nome: string
@@ -164,6 +165,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cor?: string | null
           created_at?: string
           id?: string
           nome: string
@@ -172,6 +174,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cor?: string | null
           created_at?: string
           id?: string
           nome?: string
