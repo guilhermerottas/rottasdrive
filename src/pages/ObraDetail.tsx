@@ -14,14 +14,14 @@ import { FileViewer } from "@/components/FileViewer";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { ChevronLeft, Home, ChevronRight, Folder, FileX, LayoutGrid, List, MapPin, Pencil, Building2 } from "lucide-react";
+import { ChevronLeft, Home, ChevronRight, Folder, FileX, LayoutGrid, List, MapPin, Pencil, Building2, Columns3 } from "lucide-react";
 import type { Obra } from "@/hooks/useObras";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AppHeader } from "@/components/layout/AppHeader";
 
 const ObraDetail = () => {
   const { obraId, pastaId } = useParams<{ obraId: string; pastaId?: string }>();
-  const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
+  const [viewMode, setViewMode] = useState<"list" | "grid" | "masonry">("masonry");
   const [isDragOverRoot, setIsDragOverRoot] = useState(false);
   const [editObraOpen, setEditObraOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -214,13 +214,16 @@ const ObraDetail = () => {
           <ToggleGroup
             type="single"
             value={viewMode}
-            onValueChange={(value) => value && setViewMode(value as "list" | "grid")}
+            onValueChange={(value) => value && setViewMode(value as "list" | "grid" | "masonry")}
           >
-            <ToggleGroupItem value="list" aria-label="Visualização em lista">
-              <List className="h-4 w-4" />
+            <ToggleGroupItem value="masonry" aria-label="Visualização Pinterest">
+              <Columns3 className="h-4 w-4" />
             </ToggleGroupItem>
             <ToggleGroupItem value="grid" aria-label="Visualização em grade">
               <LayoutGrid className="h-4 w-4" />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="list" aria-label="Visualização em lista">
+              <List className="h-4 w-4" />
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
@@ -256,9 +259,11 @@ const ObraDetail = () => {
                 <h2 className="text-sm font-medium text-muted-foreground mb-3">Arquivos</h2>
                 <div
                   className={
-                    viewMode === "grid"
-                      ? "grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
-                      : "grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
+                    viewMode === "masonry"
+                      ? "columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 gap-4"
+                      : viewMode === "grid"
+                        ? "grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+                        : "grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
                   }
                 >
                   {filteredArquivos.map((arquivo) => (

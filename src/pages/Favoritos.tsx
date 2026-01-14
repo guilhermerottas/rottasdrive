@@ -6,11 +6,12 @@ import { ArquivoItem } from "@/components/ArquivoItem";
 import { FileViewer } from "@/components/FileViewer";
 import { Arquivo } from "@/hooks/useArquivos";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Star } from "lucide-react";
+import { Star, Columns3, LayoutGrid, List } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export default function Favoritos() {
   const [searchValue, setSearchValue] = useState("");
-  const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
+  const [viewMode, setViewMode] = useState<"list" | "grid" | "masonry">("masonry");
   const [selectedArquivo, setSelectedArquivo] = useState<Arquivo | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
 
@@ -48,6 +49,21 @@ export default function Favoritos() {
                 {arquivos.length} arquivo{arquivos.length !== 1 ? "s" : ""} favoritado{arquivos.length !== 1 ? "s" : ""}
               </p>
             </div>
+            <ToggleGroup
+              type="single"
+              value={viewMode}
+              onValueChange={(value) => value && setViewMode(value as "list" | "grid" | "masonry")}
+            >
+              <ToggleGroupItem value="masonry" aria-label="Visualização Pinterest">
+                <Columns3 className="h-4 w-4" />
+              </ToggleGroupItem>
+              <ToggleGroupItem value="grid" aria-label="Visualização em grade">
+                <LayoutGrid className="h-4 w-4" />
+              </ToggleGroupItem>
+              <ToggleGroupItem value="list" aria-label="Visualização em lista">
+                <List className="h-4 w-4" />
+              </ToggleGroupItem>
+            </ToggleGroup>
           </div>
 
           {isLoading ? (
@@ -65,9 +81,11 @@ export default function Favoritos() {
             </div>
           ) : (
             <div className={
-              viewMode === "grid"
-                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
-                : "flex flex-col gap-2"
+              viewMode === "masonry"
+                ? "columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 gap-4"
+                : viewMode === "grid"
+                  ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                  : "flex flex-col gap-2"
             }>
               {filteredArquivos.map((arquivo) => (
                 <ArquivoItem
