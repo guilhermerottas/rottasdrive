@@ -80,7 +80,10 @@ export default {
         DEFAULT: 'var(--radius)',
         md: 'var(--radius)',
         lg: 'var(--radius-lg)',
-        xl: 'var(--radius-xl)'
+        xl: 'var(--radius-xl)',
+        '2xl': 'var(--radius-2xl)',
+        '3xl': 'var(--radius-3xl)',
+        full: 'var(--radius-full)'
       },
       spacing: {
         'xs': '4px',
