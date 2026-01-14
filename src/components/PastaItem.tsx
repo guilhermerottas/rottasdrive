@@ -78,14 +78,15 @@ export function PastaItem({ pasta }: PastaItemProps) {
   const moveArquivo = useMoveArquivo();
   const updateColor = useUpdatePastaColor();
 
-  // Buscar contagem de arquivos na pasta
+  // Buscar contagem de arquivos na pasta (excluindo arquivos na lixeira)
   const { data: arquivosCount = 0 } = useQuery({
     queryKey: ["arquivos-count", pasta.id],
     queryFn: async () => {
       const { count, error } = await supabase
         .from("arquivos")
         .select("*", { count: "exact", head: true })
-        .eq("pasta_id", pasta.id);
+        .eq("pasta_id", pasta.id)
+        .is("deleted_at", null);
       
       if (error) throw error;
       return count || 0;

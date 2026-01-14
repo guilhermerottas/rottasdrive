@@ -18,6 +18,8 @@ export type Database = {
         Row: {
           arquivo_url: string
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           id: string
           nome: string
           obra_id: string
@@ -29,6 +31,8 @@ export type Database = {
         Insert: {
           arquivo_url: string
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           nome: string
           obra_id: string
@@ -40,6 +44,8 @@ export type Database = {
         Update: {
           arquivo_url?: string
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           nome?: string
           obra_id?: string
@@ -252,6 +258,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_deleted_arquivos: { Args: never; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
