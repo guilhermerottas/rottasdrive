@@ -16,10 +16,21 @@ import { toast } from "sonner";
 interface CreatePastaDialogProps {
   obraId: string;
   pastaPaiId?: string | null;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  showTrigger?: boolean;
 }
 
-export function CreatePastaDialog({ obraId, pastaPaiId }: CreatePastaDialogProps) {
-  const [open, setOpen] = useState(false);
+export function CreatePastaDialog({ 
+  obraId, 
+  pastaPaiId,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+  showTrigger = true
+}: CreatePastaDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = controlledOnOpenChange || setInternalOpen;
   const [nome, setNome] = useState("");
   const createPasta = useCreatePasta();
 
@@ -43,12 +54,14 @@ export function CreatePastaDialog({ obraId, pastaPaiId }: CreatePastaDialogProps
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <FolderPlus className="mr-2 h-4 w-4" />
-          Nova Pasta
-        </Button>
-      </DialogTrigger>
+      {showTrigger && (
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm">
+            <FolderPlus className="mr-2 h-4 w-4" />
+            Nova Pasta
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Criar Nova Pasta</DialogTitle>
