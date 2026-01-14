@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Trash2, Palette } from "lucide-react";
+import { Trash2, Palette, FileText } from "lucide-react";
 import { Pasta, PastaColor, useDeletePasta, useUpdatePastaColor } from "@/hooks/usePastas";
 import { useMoveArquivo } from "@/hooks/useArquivos";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -75,6 +77,20 @@ export function PastaItem({ pasta }: PastaItemProps) {
   const deletePasta = useDeletePasta();
   const moveArquivo = useMoveArquivo();
   const updateColor = useUpdatePastaColor();
+
+  // Buscar contagem de arquivos na pasta
+  const { data: arquivosCount = 0 } = useQuery({
+    queryKey: ["arquivos-count", pasta.id],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("arquivos")
+        .select("*", { count: "exact", head: true })
+        .eq("pasta_id", pasta.id);
+      
+      if (error) throw error;
+      return count || 0;
+    },
+  });
 
   const currentColor = (pasta.cor as PastaColor) || "default";
   const styles = folderVariants[currentColor];
@@ -239,6 +255,10 @@ export function PastaItem({ pasta }: PastaItemProps) {
         <div className="absolute bottom-0 left-0 right-0 text-center px-2">
           <span className="text-sm font-semibold text-foreground truncate block">
             {pasta.nome}
+          </span>
+          <span className="text-xs text-muted-foreground flex items-center justify-center gap-1 mt-0.5">
+            <FileText className="h-3 w-3" />
+            {arquivosCount} {arquivosCount === 1 ? "arquivo" : "arquivos"}
           </span>
         </div>
       </Link>
