@@ -11,6 +11,12 @@ export interface Arquivo {
   tamanho: number | null;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
+  deleted_by: string | null;
+}
+
+export interface ArquivoWithObra extends Arquivo {
+  obras: { nome: string } | null;
 }
 
 export function useArquivos(obraId: string, pastaId?: string | null) {
@@ -21,6 +27,7 @@ export function useArquivos(obraId: string, pastaId?: string | null) {
         .from("arquivos")
         .select("*")
         .eq("obra_id", obraId)
+        .is("deleted_at", null)
         .order("nome", { ascending: true });
 
       if (pastaId) {
@@ -34,6 +41,21 @@ export function useArquivos(obraId: string, pastaId?: string | null) {
       return data as Arquivo[];
     },
     enabled: !!obraId,
+  });
+}
+
+export function useTrashArquivos() {
+  return useQuery({
+    queryKey: ["arquivos-trash"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("arquivos")
+        .select("*, obras(nome)")
+        .not("deleted_at", "is", null)
+        .order("deleted_at", { ascending: false });
+      if (error) throw error;
+      return data as ArquivoWithObra[];
+    },
   });
 }
 
@@ -86,7 +108,49 @@ export function useUploadArquivo() {
   });
 }
 
-export function useDeleteArquivo() {
+export function useMoveToTrash() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id }: { id: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from("arquivos")
+        .update({ 
+          deleted_at: new Date().toISOString(),
+          deleted_by: user?.id || null
+        })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["arquivos"] });
+      queryClient.invalidateQueries({ queryKey: ["arquivos-trash"] });
+      queryClient.invalidateQueries({ queryKey: ["arquivos-count"] });
+    },
+  });
+}
+
+export function useRestoreArquivo() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id }: { id: string }) => {
+      const { error } = await supabase
+        .from("arquivos")
+        .update({ deleted_at: null, deleted_by: null })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["arquivos"] });
+      queryClient.invalidateQueries({ queryKey: ["arquivos-trash"] });
+      queryClient.invalidateQueries({ queryKey: ["arquivos-count"] });
+    },
+  });
+}
+
+export function useDeletePermanently() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -102,7 +166,44 @@ export function useDeleteArquivo() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["arquivos"] });
+      queryClient.invalidateQueries({ queryKey: ["arquivos-trash"] });
+    },
+  });
+}
+
+export function useEmptyTrash() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      // Buscar todos os arquivos na lixeira
+      const { data: trashItems, error: fetchError } = await supabase
+        .from("arquivos")
+        .select("id, arquivo_url")
+        .not("deleted_at", "is", null);
+      
+      if (fetchError) throw fetchError;
+      if (!trashItems || trashItems.length === 0) return;
+
+      // Remover arquivos do storage
+      for (const item of trashItems) {
+        const url = new URL(item.arquivo_url);
+        const pathParts = url.pathname.split("/storage/v1/object/public/arquivos/");
+        if (pathParts[1]) {
+          await supabase.storage.from("arquivos").remove([decodeURIComponent(pathParts[1])]);
+        }
+      }
+
+      // Deletar todos os registros
+      const { error } = await supabase
+        .from("arquivos")
+        .delete()
+        .not("deleted_at", "is", null);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["arquivos-trash"] });
     },
   });
 }

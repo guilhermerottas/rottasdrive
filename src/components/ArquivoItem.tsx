@@ -17,7 +17,7 @@ import {
   Link,
   Star,
 } from "lucide-react";
-import { Arquivo, useDeleteArquivo } from "@/hooks/useArquivos";
+import { Arquivo, useMoveToTrash } from "@/hooks/useArquivos";
 import { useIsFavorito, useToggleFavorito } from "@/hooks/useFavoritos";
 import { toast } from "sonner";
 import {
@@ -70,7 +70,7 @@ export function ArquivoItem({ arquivo, obraId, viewMode, onView }: ArquivoItemPr
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
-  const deleteArquivo = useDeleteArquivo();
+  const moveToTrash = useMoveToTrash();
   const { data: isFavorito } = useIsFavorito(arquivo.id);
   const toggleFavorito = useToggleFavorito();
   const Icon = getFileIcon(arquivo.tipo);
@@ -80,12 +80,12 @@ export function ArquivoItem({ arquivo, obraId, viewMode, onView }: ArquivoItemPr
     toggleFavorito.mutate({ arquivoId: arquivo.id, isFavorito: !!isFavorito });
   };
 
-  const handleDelete = async () => {
+  const handleMoveToTrash = async () => {
     try {
-      await deleteArquivo.mutateAsync({ id: arquivo.id, arquivoUrl: arquivo.arquivo_url });
-      toast.success("Arquivo excluído com sucesso!");
+      await moveToTrash.mutateAsync({ id: arquivo.id });
+      toast.success("Arquivo movido para a lixeira!");
     } catch (error) {
-      toast.error("Erro ao excluir arquivo");
+      toast.error("Erro ao mover arquivo para a lixeira");
     }
   };
 
@@ -269,18 +269,18 @@ export function ArquivoItem({ arquivo, obraId, viewMode, onView }: ArquivoItemPr
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Excluir Arquivo?</AlertDialogTitle>
+              <AlertDialogTitle>Mover para Lixeira?</AlertDialogTitle>
               <AlertDialogDescription>
-                Esta ação irá excluir o arquivo "{arquivo.nome}". Esta ação não pode ser desfeita.
+                O arquivo "{arquivo.nome}" será movido para a lixeira e excluído permanentemente após 30 dias.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
               <AlertDialogAction
-                onClick={handleDelete}
+                onClick={handleMoveToTrash}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                Excluir
+                Mover para Lixeira
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -413,18 +413,18 @@ export function ArquivoItem({ arquivo, obraId, viewMode, onView }: ArquivoItemPr
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Excluir Arquivo?</AlertDialogTitle>
+              <AlertDialogTitle>Mover para Lixeira?</AlertDialogTitle>
               <AlertDialogDescription>
-                Esta ação irá excluir o arquivo "{arquivo.nome}". Esta ação não pode ser desfeita.
+                O arquivo "{arquivo.nome}" será movido para a lixeira e excluído permanentemente após 30 dias.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
               <AlertDialogAction
-                onClick={handleDelete}
+                onClick={handleMoveToTrash}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                Excluir
+                Mover para Lixeira
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -531,18 +531,18 @@ export function ArquivoItem({ arquivo, obraId, viewMode, onView }: ArquivoItemPr
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir Arquivo?</AlertDialogTitle>
+            <AlertDialogTitle>Mover para Lixeira?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação irá excluir o arquivo "{arquivo.nome}". Esta ação não pode ser desfeita.
+              O arquivo "{arquivo.nome}" será movido para a lixeira e excluído permanentemente após 30 dias.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDelete}
+              onClick={handleMoveToTrash}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Excluir
+              Mover para Lixeira
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

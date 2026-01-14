@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Building2, Star, User, ChevronLeft, ChevronRight } from "lucide-react";
+import { Building2, Star, User, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { cn } from "@/lib/utils";
 import { StorageGauge } from "@/components/StorageGauge";
@@ -8,6 +8,7 @@ import { useState } from "react";
 const menuItems = [
   { title: "Obras", url: "/", icon: Building2 },
   { title: "Favoritos", url: "/favoritos", icon: Star },
+  { title: "Lixeira", url: "/lixeira", icon: Trash2 },
   { title: "Perfil", url: "/perfil", icon: User },
 ];
 

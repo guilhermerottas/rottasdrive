@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import ObraDetail from "./pages/ObraDetail";
 import Favoritos from "./pages/Favoritos";
 import Perfil from "./pages/Perfil";
+import Lixeira from "./pages/Lixeira";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -54,6 +55,7 @@ const AppRoutes = () => (
     <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
     <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
     <Route path="/favoritos" element={<ProtectedRoute><Favoritos /></ProtectedRoute>} />
+    <Route path="/lixeira" element={<ProtectedRoute><Lixeira /></ProtectedRoute>} />
     <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
     <Route path="/obra/:obraId" element={<ProtectedRoute><ObraDetail /></ProtectedRoute>} />
     <Route path="/obra/:obraId/pasta/:pastaId" element={<ProtectedRoute><ObraDetail /></ProtectedRoute>} />
