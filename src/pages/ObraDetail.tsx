@@ -25,6 +25,7 @@ const ObraDetail = () => {
   const [isDragOverRoot, setIsDragOverRoot] = useState(false);
   const [editObraOpen, setEditObraOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [createPastaOpen, setCreatePastaOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [selectedArquivo, setSelectedArquivo] = useState<Arquivo | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
@@ -95,7 +96,9 @@ const ObraDetail = () => {
     <AppLayout>
       <AppHeader 
         showUpload={true}
+        showNewFolder={true}
         onUploadClick={() => setUploadOpen(true)}
+        onNewFolderClick={() => setCreatePastaOpen(true)}
         searchValue={searchValue}
         onSearchChange={setSearchValue}
       />
@@ -207,10 +210,7 @@ const ObraDetail = () => {
         </nav>
 
         {/* Actions */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <CreatePastaDialog obraId={obraId!} pastaPaiId={pastaId} />
-          </div>
+        <div className="flex items-center justify-end mb-6">
           <ToggleGroup
             type="single"
             value={viewMode}
@@ -297,6 +297,7 @@ const ObraDetail = () => {
       </div>
 
       <UploadArquivoDialog obraId={obraId!} pastaId={pastaId} open={uploadOpen} onOpenChange={setUploadOpen} showTrigger={false} />
+      <CreatePastaDialog obraId={obraId!} pastaPaiId={pastaId} open={createPastaOpen} onOpenChange={setCreatePastaOpen} showTrigger={false} />
       <EditObraDialog open={editObraOpen} onOpenChange={setEditObraOpen} obra={obra} />
       <FileViewer
         arquivo={selectedArquivo}
