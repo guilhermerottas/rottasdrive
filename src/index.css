@@ -55,11 +55,14 @@
     --input: 240 4% 91%; /* #E5E5EA */
     --ring: 37 94% 50%; /* #F49B0B */
 
-    /* Border radius */
-    --radius: 0.75rem; /* 12px medium */
+    /* Border radius - iOS Complete */
     --radius-sm: 0.5rem; /* 8px small */
+    --radius: 0.75rem; /* 12px medium */
     --radius-lg: 1rem; /* 16px large */
     --radius-xl: 1.25rem; /* 20px xlarge */
+    --radius-2xl: 1.5rem; /* 24px modals/sheets */
+    --radius-3xl: 1.75rem; /* 28px hero elements */
+    --radius-full: 9999px; /* pills/capsules */
 
     /* Category colors */
     --category-documents: 37 94% 50%; /* #F49B0B */
