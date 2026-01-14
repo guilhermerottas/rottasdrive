@@ -220,7 +220,7 @@ export function PastaItem({ pasta }: PastaItemProps) {
           {/* Folder Body */}
           <div 
             className={cn(
-              "absolute top-3 left-0 w-[140px] h-[90px] rounded-xl z-[2] overflow-hidden",
+              "absolute top-3 left-0 w-[140px] h-[90px] rounded-[10px] z-[2] overflow-hidden",
               styles.bodyGradient,
               styles.shadow,
               "shadow-[inset_0_2px_8px_rgba(255,255,255,0.4),inset_0_-2px_8px_rgba(0,0,0,0.1)]",
@@ -231,7 +231,7 @@ export function PastaItem({ pasta }: PastaItemProps) {
             <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/10 to-transparent z-[3]" />
             
             {/* Gloss Effect */}
-            <div className="absolute top-2 left-2 right-2 h-[30px] bg-gradient-to-b from-white/60 to-transparent rounded-lg z-[4]" />
+            <div className="absolute top-2 left-2 right-2 h-[30px] bg-gradient-to-b from-white/60 to-transparent rounded-[6px] z-[4]" />
           </div>
         </div>
 
