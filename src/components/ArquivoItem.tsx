@@ -47,7 +47,7 @@ import { cn } from "@/lib/utils";
 interface ArquivoItemProps {
   arquivo: Arquivo;
   obraId: string;
-  viewMode: "list" | "grid";
+  viewMode: "list" | "grid" | "masonry";
   onView?: () => void;
 }
 
@@ -134,6 +134,176 @@ export function ArquivoItem({ arquivo, obraId, viewMode, onView }: ArquivoItemPr
       toast.error("Erro ao copiar link");
     }
   };
+
+  // Masonry layout - Pinterest style
+  if (viewMode === "masonry") {
+    return (
+      <>
+        <div 
+          className="break-inside-avoid mb-4 group relative"
+          draggable
+          onDragStart={handleDragStart}
+        >
+          {/* Image/Preview Container */}
+          <div 
+            className="relative overflow-hidden rounded-2xl bg-muted cursor-pointer"
+            onClick={onView}
+          >
+            {isImage ? (
+              <img
+                src={arquivo.arquivo_url}
+                alt={arquivo.nome}
+                className="w-full h-auto object-cover hover:scale-105 transition-transform duration-300"
+                loading="lazy"
+              />
+            ) : (
+              <div className="aspect-[4/3] flex items-center justify-center bg-muted">
+                <Icon className="h-16 w-16 text-muted-foreground" />
+              </div>
+            )}
+            
+            {/* Hover overlay with gradient */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+            
+            {/* Favorite button - top left */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "absolute top-2 left-2 h-8 w-8 bg-white/80 backdrop-blur-sm rounded-full transition-opacity",
+                isFavorito ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              )}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleToggleFavorito();
+              }}
+            >
+              <Star className={cn("h-4 w-4", isFavorito ? "fill-yellow-400 text-yellow-400" : "text-gray-600")} />
+            </Button>
+
+            {/* Quick actions - top right */}
+            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 bg-white/80 backdrop-blur-sm rounded-full"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDownload();
+                }}
+              >
+                <Download className="h-4 w-4 text-gray-600" />
+              </Button>
+            </div>
+          </div>
+          
+          {/* Info below image */}
+          <div className="flex items-center justify-between mt-2 px-1">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{arquivo.nome}</p>
+              <p className="text-xs text-muted-foreground">{formatSize(arquivo.tamanho)}</p>
+            </div>
+            
+            {/* Three dots menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onView?.(); }}>
+                  <Eye className="mr-2 h-4 w-4" />
+                  Visualizar
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleToggleFavorito(); }}>
+                  <Star className={cn("mr-2 h-4 w-4", isFavorito && "fill-yellow-400 text-yellow-400")} />
+                  {isFavorito ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                </DropdownMenuItem>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Compartilhar
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem onClick={handleShareWhatsApp}>
+                      <MessageCircle className="mr-2 h-4 w-4" />
+                      WhatsApp
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleShareEmail}>
+                      <Mail className="mr-2 h-4 w-4" />
+                      E-mail
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleCopyLink}>
+                      <Link className="mr-2 h-4 w-4" />
+                      Copiar Link
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                <DropdownMenuItem onClick={handleDownload}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Download
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setRenameDialogOpen(true)}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Renomear
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setMoveDialogOpen(true)}>
+                  <FolderInput className="mr-2 h-4 w-4" />
+                  Mover
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => setDeleteDialogOpen(true)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Excluir
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir Arquivo?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta ação irá excluir o arquivo "{arquivo.nome}". Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <MoveArquivoDialog
+          open={moveDialogOpen}
+          onOpenChange={setMoveDialogOpen}
+          arquivoId={arquivo.id}
+          arquivoNome={arquivo.nome}
+          obraId={obraId}
+          currentPastaId={arquivo.pasta_id}
+        />
+
+        <RenameArquivoDialog
+          open={renameDialogOpen}
+          onOpenChange={setRenameDialogOpen}
+          arquivoId={arquivo.id}
+          currentName={arquivo.nome}
+        />
+      </>
+    );
+  }
 
   if (viewMode === "grid") {
     return (
