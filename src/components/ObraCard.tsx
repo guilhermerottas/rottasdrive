@@ -44,19 +44,19 @@ export function ObraCard({ obra }: ObraCardProps) {
   return (
     <>
       <Card className="group hover:shadow-lg transition-all overflow-hidden">
-        <div className="aspect-[4/3] overflow-hidden bg-muted">
+        <Link to={`/obra/${obra.id}`} className="block aspect-[4/3] overflow-hidden bg-muted cursor-pointer">
           {obra.foto_url ? (
             <img 
               src={obra.foto_url} 
               alt={obra.nome} 
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
           ) : (
-            <div className="h-full w-full flex items-center justify-center bg-primary/10">
+            <div className="h-full w-full flex items-center justify-center bg-primary/10 group-hover:bg-primary/15 transition-colors">
               <Building2 className="h-16 w-16 text-primary/50" />
             </div>
           )}
-        </div>
+        </Link>
         <div className="p-4">
           <div className="flex items-start justify-between gap-2">
             <Link to={`/obra/${obra.id}`} className="flex-1 min-w-0">
