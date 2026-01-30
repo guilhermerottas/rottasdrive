@@ -1,4 +1,4 @@
-import { Search, Upload, FolderPlus } from "lucide-react";
+import { Search, Upload, FolderPlus, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
@@ -80,8 +80,17 @@ export function AppHeader({
             placeholder="Pesquisar..."
             value={searchValue}
             onChange={(e) => onSearchChange?.(e.target.value)}
-            className="pl-10 bg-background border-border"
+            className="pl-10 pr-10 bg-background border-border"
           />
+          {searchValue && (
+            <button
+              type="button"
+              onClick={() => onSearchChange?.("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
 
