@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,7 @@ import { PastaItem } from "@/components/PastaItem";
 import { ArquivoItem } from "@/components/ArquivoItem";
 import { ArquivosTableView } from "@/components/ArquivosTableView";
 import { FileViewer } from "@/components/FileViewer";
+import { SelectionToolbar } from "@/components/SelectionToolbar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -30,6 +31,7 @@ const ObraDetail = () => {
   const [searchValue, setSearchValue] = useState("");
   const [selectedArquivo, setSelectedArquivo] = useState<Arquivo | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const moveArquivo = useMoveArquivo();
 
   const { data: obra, isLoading: obraLoading } = useQuery({
@@ -59,6 +61,31 @@ const ObraDetail = () => {
   const filteredArquivos = arquivos?.filter((arquivo) =>
     arquivo.nome.toLowerCase().includes(searchValue.toLowerCase())
   );
+
+  // Selection handlers
+  const toggleSelection = useCallback((id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
+  const selectAll = useCallback(() => {
+    if (filteredArquivos) {
+      setSelectedIds(new Set(filteredArquivos.map(a => a.id)));
+    }
+  }, [filteredArquivos]);
+
+  const isSelected = useCallback((id: string) => selectedIds.has(id), [selectedIds]);
 
   if (obraLoading) {
     return (
@@ -266,6 +293,10 @@ const ObraDetail = () => {
                       setSelectedArquivo(arquivo);
                       setViewerOpen(true);
                     }}
+                    selectedIds={selectedIds}
+                    onToggleSelection={toggleSelection}
+                    onSelectAll={selectAll}
+                    onClearSelection={clearSelection}
                   />
                 ) : (
                   <div
@@ -285,6 +316,8 @@ const ObraDetail = () => {
                           setSelectedArquivo(arquivo);
                           setViewerOpen(true);
                         }}
+                        isSelected={isSelected(arquivo.id)}
+                        onToggleSelection={() => toggleSelection(arquivo.id)}
                       />
                     ))}
                   </div>
@@ -315,6 +348,13 @@ const ObraDetail = () => {
         onOpenChange={setViewerOpen}
         arquivos={filteredArquivos || []}
         onNavigate={setSelectedArquivo}
+      />
+      <SelectionToolbar
+        selectedIds={selectedIds}
+        arquivos={filteredArquivos || []}
+        onClearSelection={clearSelection}
+        onSelectAll={selectAll}
+        totalCount={filteredArquivos?.length || 0}
       />
     </AppLayout>
   );

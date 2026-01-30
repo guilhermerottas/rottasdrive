@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -59,6 +60,10 @@ interface ArquivosTableViewProps {
   arquivos: Arquivo[];
   obraId: string;
   onView: (arquivo: Arquivo) => void;
+  selectedIds: Set<string>;
+  onToggleSelection: (id: string) => void;
+  onSelectAll: () => void;
+  onClearSelection: () => void;
 }
 
 const getFileIcon = (tipo: string | null) => {
@@ -119,7 +124,7 @@ const formatTipo = (tipo: string | null) => {
   return tipo.split("/")[1]?.toUpperCase() || tipo;
 };
 
-function ArquivoTableRow({ arquivo, obraId, onView }: { arquivo: Arquivo; obraId: string; onView: () => void }) {
+function ArquivoTableRow({ arquivo, obraId, onView, isSelected, onToggleSelection }: { arquivo: Arquivo; obraId: string; onView: () => void; isSelected: boolean; onToggleSelection: () => void }) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
@@ -185,9 +190,18 @@ function ArquivoTableRow({ arquivo, obraId, onView }: { arquivo: Arquivo; obraId
   return (
     <>
       <TableRow 
-        className="cursor-pointer hover:bg-muted/50 transition-colors group"
+        className={cn(
+          "cursor-pointer hover:bg-muted/50 transition-colors group",
+          isSelected && "bg-primary/5"
+        )}
         onClick={onView}
       >
+        <TableCell className="py-2 w-10" onClick={(e) => e.stopPropagation()}>
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={() => onToggleSelection()}
+          />
+        </TableCell>
         <TableCell className="py-2">
           <div className="flex items-center gap-3">
             {isImage ? (
@@ -325,12 +339,28 @@ function ArquivoTableRow({ arquivo, obraId, onView }: { arquivo: Arquivo; obraId
   );
 }
 
-export function ArquivosTableView({ arquivos, obraId, onView }: ArquivosTableViewProps) {
+export function ArquivosTableView({ arquivos, obraId, onView, selectedIds, onToggleSelection, onSelectAll, onClearSelection }: ArquivosTableViewProps) {
+  const allSelected = arquivos.length > 0 && arquivos.every(a => selectedIds.has(a.id));
+  const someSelected = arquivos.some(a => selectedIds.has(a.id));
+
   return (
     <div className="border rounded-lg overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50">
+            <TableHead className="w-10">
+              <Checkbox
+                checked={allSelected}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    onSelectAll();
+                  } else {
+                    onClearSelection();
+                  }
+                }}
+                className={someSelected && !allSelected ? "opacity-50" : ""}
+              />
+            </TableHead>
             <TableHead className="font-semibold">Nome</TableHead>
             <TableHead className="font-semibold whitespace-nowrap">Tamanho</TableHead>
             <TableHead className="font-semibold">Tipo</TableHead>
@@ -346,6 +376,8 @@ export function ArquivosTableView({ arquivos, obraId, onView }: ArquivosTableVie
               arquivo={arquivo}
               obraId={obraId}
               onView={() => onView(arquivo)}
+              isSelected={selectedIds.has(arquivo.id)}
+              onToggleSelection={() => onToggleSelection(arquivo.id)}
             />
           ))}
         </TableBody>
