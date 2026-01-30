@@ -24,7 +24,7 @@ export function useFavoritos() {
           user_id,
           arquivo_id,
           created_at,
-          arquivos (
+          arquivos!inner (
             id,
             obra_id,
             pasta_id,
@@ -33,10 +33,13 @@ export function useFavoritos() {
             tipo,
             tamanho,
             created_at,
-            updated_at
+            updated_at,
+            deleted_at,
+            uploaded_by
           )
         `)
         .eq("user_id", user.id)
+        .is("arquivos.deleted_at", null)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
