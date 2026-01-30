@@ -10,6 +10,7 @@ import { CreatePastaDialog } from "@/components/CreatePastaDialog";
 import { UploadArquivoDialog } from "@/components/UploadArquivoDialog";
 import { EditObraDialog } from "@/components/EditObraDialog";
 import { PastaItem } from "@/components/PastaItem";
+import { PastaListItem } from "@/components/PastaListItem";
 import { ArquivoItem } from "@/components/ArquivoItem";
 import { ArquivosTableView } from "@/components/ArquivosTableView";
 import { FileViewer } from "@/components/FileViewer";
@@ -26,6 +27,7 @@ const ObraDetail = () => {
   const { obraId, pastaId } = useParams<{ obraId: string; pastaId?: string }>();
   const { canEdit } = useAuthContext();
   const [viewMode, setViewMode] = useState<"list" | "grid" | "masonry">("masonry");
+  const [pastaViewMode, setPastaViewMode] = useState<"grid" | "list">("grid");
   const [isDragOverRoot, setIsDragOverRoot] = useState(false);
   const [editObraOpen, setEditObraOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -272,16 +274,35 @@ const ObraDetail = () => {
             {/* Pastas */}
             {filteredPastas && filteredPastas.length > 0 && (
               <div className="mb-6">
-                <h2 className="text-sm font-medium text-muted-foreground mb-3">Pastas</h2>
-                <div className={
-                  viewMode === "grid"
-                    ? "grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
-                    : "grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
-                }>
-                  {filteredPastas.map((pasta) => (
-                    <PastaItem key={pasta.id} pasta={pasta} />
-                  ))}
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-sm font-medium text-muted-foreground">Pastas</h2>
+                  <ToggleGroup
+                    type="single"
+                    value={pastaViewMode}
+                    onValueChange={(value) => value && setPastaViewMode(value as "grid" | "list")}
+                    className="h-8"
+                  >
+                    <ToggleGroupItem value="grid" aria-label="Visualização em grade" className="h-7 w-7 p-0">
+                      <LayoutGrid className="h-3.5 w-3.5" />
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="list" aria-label="Visualização em lista" className="h-7 w-7 p-0">
+                      <List className="h-3.5 w-3.5" />
+                    </ToggleGroupItem>
+                  </ToggleGroup>
                 </div>
+                {pastaViewMode === "grid" ? (
+                  <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                    {filteredPastas.map((pasta) => (
+                      <PastaItem key={pasta.id} pasta={pasta} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {filteredPastas.map((pasta) => (
+                      <PastaListItem key={pasta.id} pasta={pasta} />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
