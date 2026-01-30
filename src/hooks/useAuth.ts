@@ -82,6 +82,22 @@ export const useAuth = () => {
       email,
       password,
     });
+
+    // Check if user is blocked after successful login
+    if (data?.user && !error) {
+      const { data: isBlocked } = await supabase.rpc("is_user_blocked", {
+        _user_id: data.user.id,
+      });
+
+      if (isBlocked) {
+        await supabase.auth.signOut();
+        return { 
+          data: null, 
+          error: { message: "Sua conta foi bloqueada. Entre em contato com o administrador." } 
+        };
+      }
+    }
+
     return { data, error };
   };
 
