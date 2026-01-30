@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuthContext } from "@/components/AuthProvider";
-import { useAdminUsers, UserWithProfile } from "@/hooks/useAdminUsers";
+import { useAdminUsers } from "@/hooks/useAdminUsers";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { InviteUserDialog } from "@/components/InviteUserDialog";
@@ -11,7 +11,17 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Shield, Users, UserPlus, Crown, Edit, Eye } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Shield, Users, UserPlus, Crown, Edit, Eye, Ban, UserCheck } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AppRole } from "@/hooks/useAuth";
@@ -25,9 +35,12 @@ const roleLabels: Record<string, { label: string; icon: typeof Crown; color: str
 
 const Admin = () => {
   const { isAdmin, user, loading: authLoading } = useAuthContext();
-  const { users, isLoading, updateUserRole } = useAdminUsers();
+  const { users, isLoading, updateUserRole, blockUser } = useAdminUsers();
   const [searchValue, setSearchValue] = useState("");
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [blockConfirmOpen, setBlockConfirmOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [blockAction, setBlockAction] = useState<"block" | "unblock">("block");
 
   // Wait for auth to load before checking permissions
   if (authLoading) {
@@ -57,6 +70,20 @@ const Admin = () => {
     updateUserRole.mutate({ userId, newRole });
   };
 
+  const handleBlockClick = (userId: string, action: "block" | "unblock") => {
+    setSelectedUserId(userId);
+    setBlockAction(action);
+    setBlockConfirmOpen(true);
+  };
+
+  const handleConfirmBlock = () => {
+    if (selectedUserId) {
+      blockUser.mutate({ userId: selectedUserId, action: blockAction });
+    }
+    setBlockConfirmOpen(false);
+    setSelectedUserId(null);
+  };
+
   const getRoleBadge = (role: AppRole) => {
     const config = roleLabels[role];
     const Icon = config.icon;
@@ -67,6 +94,8 @@ const Admin = () => {
       </Badge>
     );
   };
+
+  const selectedUser = users?.find((u) => u.user_id === selectedUserId);
 
   return (
     <AppLayout>
@@ -95,7 +124,7 @@ const Admin = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
           <div className="bg-card border border-border rounded-xl p-4">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
@@ -129,9 +158,22 @@ const Admin = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold">
-                  {users?.filter((u) => u.role === "viewer").length || 0}
+                  {users?.filter((u) => u.role === "viewer" || (u.role as string) === "user").length || 0}
                 </p>
                 <p className="text-xs text-muted-foreground">Visualizadores</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-card border border-border rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-destructive/10 flex items-center justify-center">
+                <Ban className="h-5 w-5 text-destructive" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">
+                  {users?.filter((u) => u.is_blocked).length || 0}
+                </p>
+                <p className="text-xs text-muted-foreground">Bloqueados</p>
               </div>
             </div>
           </div>
@@ -157,14 +199,16 @@ const Admin = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Usuário</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Nível Atual</TableHead>
                   <TableHead>Data de Registro</TableHead>
                   <TableHead>Alterar Nível</TableHead>
+                  <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredUsers.map((userItem) => (
-                  <TableRow key={userItem.user_id}>
+                  <TableRow key={userItem.user_id} className={userItem.is_blocked ? "opacity-60" : ""}>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10">
@@ -184,6 +228,19 @@ const Admin = () => {
                         </div>
                       </div>
                     </TableCell>
+                    <TableCell>
+                      {userItem.is_blocked ? (
+                        <Badge variant="destructive" className="gap-1">
+                          <Ban className="h-3 w-3" />
+                          Bloqueado
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="gap-1 text-green-600 border-green-600">
+                          <UserCheck className="h-3 w-3" />
+                          Ativo
+                        </Badge>
+                      )}
+                    </TableCell>
                     <TableCell>{getRoleBadge(userItem.role)}</TableCell>
                     <TableCell>
                       {format(new Date(userItem.created_at), "dd 'de' MMM 'de' yyyy", {
@@ -192,9 +249,9 @@ const Admin = () => {
                     </TableCell>
                     <TableCell>
                       {userItem.user_id === user?.id ? (
-                        <span className="text-sm text-muted-foreground">
-                          Não é possível alterar seu próprio nível
-                        </span>
+                        <span className="text-sm text-muted-foreground">—</span>
+                      ) : userItem.is_blocked ? (
+                        <span className="text-sm text-muted-foreground">—</span>
                       ) : (
                         <Select
                           value={userItem.role}
@@ -229,6 +286,33 @@ const Admin = () => {
                         </Select>
                       )}
                     </TableCell>
+                    <TableCell>
+                      {userItem.user_id === user?.id ? (
+                        <span className="text-sm text-muted-foreground">—</span>
+                      ) : userItem.is_blocked ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleBlockClick(userItem.user_id, "unblock")}
+                          disabled={blockUser.isPending}
+                          className="gap-1"
+                        >
+                          <UserCheck className="h-4 w-4" />
+                          Desbloquear
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleBlockClick(userItem.user_id, "block")}
+                          disabled={blockUser.isPending}
+                          className="gap-1"
+                        >
+                          <Ban className="h-4 w-4" />
+                          Bloquear
+                        </Button>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -243,6 +327,38 @@ const Admin = () => {
       </div>
 
       <InviteUserDialog open={inviteOpen} onOpenChange={setInviteOpen} />
+
+      <AlertDialog open={blockConfirmOpen} onOpenChange={setBlockConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {blockAction === "block" ? "Bloquear usuário?" : "Desbloquear usuário?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {blockAction === "block" ? (
+                <>
+                  O usuário <strong>{selectedUser?.nome}</strong> será deslogado imediatamente
+                  e não conseguirá mais acessar a plataforma até ser desbloqueado.
+                </>
+              ) : (
+                <>
+                  O usuário <strong>{selectedUser?.nome}</strong> poderá acessar a plataforma
+                  novamente.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmBlock}
+              className={blockAction === "block" ? "bg-destructive hover:bg-destructive/90" : ""}
+            >
+              {blockAction === "block" ? "Bloquear" : "Desbloquear"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 };
