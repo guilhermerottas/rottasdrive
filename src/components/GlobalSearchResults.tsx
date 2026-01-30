@@ -84,9 +84,19 @@ export function GlobalSearchResults({ results, isLoading, searchTerm }: GlobalSe
             className="flex items-center gap-4 p-4 bg-card border border-border rounded-lg hover:bg-accent/50 transition-colors cursor-pointer group"
             onClick={() => handleFileClick(file)}
           >
-            {/* File icon */}
-            <div className="flex-shrink-0">
-              {getFileIcon(file.tipo)}
+            {/* File thumbnail or icon */}
+            <div className="flex-shrink-0 w-[100px] h-[100px] rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+              {file.tipo?.startsWith("image/") ? (
+                <img
+                  src={file.arquivo_url}
+                  alt={file.nome}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="flex items-center justify-center w-full h-full">
+                  {getFileIcon(file.tipo)}
+                </div>
+              )}
             </div>
 
             {/* File info */}
@@ -110,7 +120,7 @@ export function GlobalSearchResults({ results, isLoading, searchTerm }: GlobalSe
             </div>
 
             {/* File size */}
-            <div className="flex-shrink-0 text-sm text-muted-foreground">
+            <div className="flex-shrink-0 text-sm text-muted-foreground hidden sm:block">
               {formatFileSize(file.tamanho)}
             </div>
 
