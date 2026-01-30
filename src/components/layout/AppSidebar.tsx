@@ -36,7 +36,7 @@ export function AppSidebar() {
       </button>
 
       <div className={cn("p-6 flex items-center gap-3", collapsed && "justify-center")}>
-        <img src={logo} alt="Logo" className="w-10 h-10" />
+        <img src={logo} alt="Logo" className="w-10 h-10 object-contain aspect-square" />
         {!collapsed && <span className="font-bold text-lg">Rottas</span>}
       </div>
 
