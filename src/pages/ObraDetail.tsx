@@ -10,6 +10,7 @@ import { UploadArquivoDialog } from "@/components/UploadArquivoDialog";
 import { EditObraDialog } from "@/components/EditObraDialog";
 import { PastaItem } from "@/components/PastaItem";
 import { ArquivoItem } from "@/components/ArquivoItem";
+import { ArquivosTableView } from "@/components/ArquivosTableView";
 import { FileViewer } from "@/components/FileViewer";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -257,28 +258,37 @@ const ObraDetail = () => {
             {filteredArquivos && filteredArquivos.length > 0 && (
               <div>
                 <h2 className="text-sm font-medium text-muted-foreground mb-3">Arquivos</h2>
-                <div
-                  className={
-                    viewMode === "masonry"
-                      ? "columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 gap-4"
-                      : viewMode === "grid"
-                        ? "grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
-                        : "grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
-                  }
-                >
-                  {filteredArquivos.map((arquivo) => (
-                    <ArquivoItem 
-                      key={arquivo.id} 
-                      arquivo={arquivo} 
-                      obraId={obraId!} 
-                      viewMode={viewMode}
-                      onView={() => {
-                        setSelectedArquivo(arquivo);
-                        setViewerOpen(true);
-                      }}
-                    />
-                  ))}
-                </div>
+                {viewMode === "list" ? (
+                  <ArquivosTableView
+                    arquivos={filteredArquivos}
+                    obraId={obraId!}
+                    onView={(arquivo) => {
+                      setSelectedArquivo(arquivo);
+                      setViewerOpen(true);
+                    }}
+                  />
+                ) : (
+                  <div
+                    className={
+                      viewMode === "masonry"
+                        ? "columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 gap-4"
+                        : "grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+                    }
+                  >
+                    {filteredArquivos.map((arquivo) => (
+                      <ArquivoItem 
+                        key={arquivo.id} 
+                        arquivo={arquivo} 
+                        obraId={obraId!} 
+                        viewMode={viewMode}
+                        onView={() => {
+                          setSelectedArquivo(arquivo);
+                          setViewerOpen(true);
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

@@ -1,6 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+export interface UploaderProfile {
+  nome: string | null;
+}
+
 export interface Arquivo {
   id: string;
   obra_id: string;
@@ -13,6 +17,8 @@ export interface Arquivo {
   updated_at: string;
   deleted_at: string | null;
   deleted_by: string | null;
+  uploaded_by: string | null;
+  uploader?: UploaderProfile | null;
 }
 
 export interface ArquivoWithObra extends Arquivo {
@@ -28,7 +34,7 @@ export function useArquivos(obraId: string, pastaId?: string | null) {
         .select("*")
         .eq("obra_id", obraId)
         .is("deleted_at", null)
-        .order("nome", { ascending: true });
+        .order("created_at", { ascending: false });
 
       if (pastaId) {
         query = query.eq("pasta_id", pastaId);
@@ -38,7 +44,26 @@ export function useArquivos(obraId: string, pastaId?: string | null) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as Arquivo[];
+      
+      // Buscar os perfis dos uploaders
+      const arquivos = data as Arquivo[];
+      const uploaderIds = [...new Set(arquivos.filter(a => a.uploaded_by).map(a => a.uploaded_by))];
+      
+      if (uploaderIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, nome")
+          .in("user_id", uploaderIds);
+        
+        const profileMap = new Map(profiles?.map(p => [p.user_id, { nome: p.nome }]) || []);
+        
+        return arquivos.map(a => ({
+          ...a,
+          uploader: a.uploaded_by ? profileMap.get(a.uploaded_by) || null : null
+        }));
+      }
+      
+      return arquivos;
     },
     enabled: !!obraId,
   });
@@ -72,6 +97,9 @@ export function useUploadArquivo() {
       obraId: string;
       pastaId?: string | null;
     }) => {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+
       // Upload file to storage
       const fileName = `${obraId}/${pastaId || "root"}/${Date.now()}_${file.name}`;
       const { error: uploadError } = await supabase.storage
@@ -85,7 +113,7 @@ export function useUploadArquivo() {
         .from("arquivos")
         .getPublicUrl(fileName);
 
-      // Create arquivo record
+      // Create arquivo record with uploaded_by
       const { data, error } = await supabase
         .from("arquivos")
         .insert({
@@ -95,6 +123,7 @@ export function useUploadArquivo() {
           arquivo_url: urlData.publicUrl,
           tipo: file.type,
           tamanho: file.size,
+          uploaded_by: user?.id || null,
         })
         .select()
         .single();
