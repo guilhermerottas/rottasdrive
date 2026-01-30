@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   FileText,
   FileImage,
@@ -49,6 +50,8 @@ interface ArquivoItemProps {
   obraId: string;
   viewMode: "list" | "grid" | "masonry";
   onView?: () => void;
+  isSelected?: boolean;
+  onToggleSelection?: () => void;
 }
 
 const getFileIcon = (tipo: string | null) => {
@@ -66,7 +69,7 @@ const formatSize = (bytes: number | null) => {
   return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 };
 
-export function ArquivoItem({ arquivo, obraId, viewMode, onView }: ArquivoItemProps) {
+export function ArquivoItem({ arquivo, obraId, viewMode, onView, isSelected = false, onToggleSelection }: ArquivoItemProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
@@ -140,10 +143,30 @@ export function ArquivoItem({ arquivo, obraId, viewMode, onView }: ArquivoItemPr
     return (
       <>
         <div 
-          className="break-inside-avoid mb-4 group relative"
+          className={cn(
+            "break-inside-avoid mb-4 group relative",
+            isSelected && "ring-2 ring-primary rounded-2xl"
+          )}
           draggable
           onDragStart={handleDragStart}
         >
+          {/* Selection checkbox */}
+          {onToggleSelection && (
+            <div 
+              className={cn(
+                "absolute top-2 left-2 z-10 transition-opacity",
+                isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              )}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Checkbox
+                checked={isSelected}
+                onCheckedChange={() => onToggleSelection()}
+                className="h-5 w-5 bg-white/80 backdrop-blur-sm border-2"
+              />
+            </div>
+          )}
+
           {/* Image/Preview Container */}
           <div 
             className="relative overflow-hidden rounded-2xl bg-muted cursor-pointer"
@@ -165,12 +188,12 @@ export function ArquivoItem({ arquivo, obraId, viewMode, onView }: ArquivoItemPr
             {/* Hover overlay with gradient */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
             
-            {/* Favorite button - top left */}
+            {/* Favorite button - top right now (moved from left) */}
             <Button
               variant="ghost"
               size="icon"
               className={cn(
-                "absolute top-2 left-2 h-8 w-8 bg-white/80 backdrop-blur-sm rounded-full transition-opacity",
+                "absolute top-2 right-12 h-8 w-8 bg-white/80 backdrop-blur-sm rounded-full transition-opacity",
                 isFavorito ? "opacity-100" : "opacity-0 group-hover:opacity-100"
               )}
               onClick={(e) => {
@@ -309,14 +332,36 @@ export function ArquivoItem({ arquivo, obraId, viewMode, onView }: ArquivoItemPr
     return (
       <>
         <div 
-          className="group relative flex flex-col items-center p-4 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
+          className={cn(
+            "group relative flex flex-col items-center p-4 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer",
+            isSelected && "ring-2 ring-primary bg-primary/5"
+          )}
           onClick={onView}
         >
+          {/* Selection checkbox */}
+          {onToggleSelection && (
+            <div 
+              className={cn(
+                "absolute top-2 left-2 z-10 transition-opacity",
+                isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              )}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Checkbox
+                checked={isSelected}
+                onCheckedChange={() => onToggleSelection()}
+              />
+            </div>
+          )}
+
           {/* Favorite button */}
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-2 left-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+            className={cn(
+              "absolute top-2 right-10 h-8 w-8 transition-opacity",
+              isFavorito ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+            )}
             onClick={(e) => {
               e.stopPropagation();
               handleToggleFavorito();
