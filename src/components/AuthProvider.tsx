@@ -1,5 +1,5 @@
 import { createContext, useContext, ReactNode } from "react";
-import { useAuth, Profile, UserRole } from "@/hooks/useAuth";
+import { useAuth, Profile, AppRole, UserRole } from "@/hooks/useAuth";
 import { User, Session } from "@supabase/supabase-js";
 
 interface AuthContextType {
@@ -9,6 +9,9 @@ interface AuthContextType {
   roles: UserRole[];
   loading: boolean;
   isAdmin: boolean;
+  canEdit: boolean;
+  hasRole: (role: AppRole) => boolean;
+  getUserRole: () => AppRole;
   signIn: (email: string, password: string) => Promise<any>;
   signUp: (email: string, password: string, nome: string) => Promise<any>;
   signOut: () => Promise<void>;

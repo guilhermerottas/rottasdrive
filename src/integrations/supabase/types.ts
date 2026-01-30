@@ -261,6 +261,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_edit: { Args: { _user_id: string }; Returns: boolean }
       cleanup_deleted_arquivos: { Args: never; Returns: undefined }
       has_role: {
         Args: {
