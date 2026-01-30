@@ -26,6 +26,23 @@ export function useObras() {
   });
 }
 
+export function useObra(id: string) {
+  return useQuery({
+    queryKey: ["obra", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("obras")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (error) throw error;
+      return data as Obra;
+    },
+    enabled: !!id,
+  });
+}
+
 export function useCreateObra() {
   const queryClient = useQueryClient();
 
