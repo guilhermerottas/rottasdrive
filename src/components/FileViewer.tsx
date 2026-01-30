@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, X, Star, ChevronLeft, ChevronRight, User, Calendar, HardDrive, FileType, Building2, Info } from "lucide-react";
+import { Download, Star, ChevronLeft, ChevronRight, User, Calendar, HardDrive, FileType, Building2, Info } from "lucide-react";
 import { Arquivo } from "@/hooks/useArquivos";
 import { useIsFavorito, useToggleFavorito } from "@/hooks/useFavoritos";
 import { useObra } from "@/hooks/useObras";
@@ -133,7 +133,7 @@ export function FileViewer({ arquivo, open, onOpenChange, arquivos = [], onNavig
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl w-full max-h-[90vh] flex flex-col p-0 gap-0">
-        <DialogHeader className="flex flex-row items-center justify-between p-4 border-b">
+        <DialogHeader className="flex flex-row items-center justify-between p-4 border-b pr-12">
           <DialogTitle className="truncate pr-4">{arquivo.nome}</DialogTitle>
           <div className="flex items-center gap-1">
             <Button
@@ -159,9 +159,6 @@ export function FileViewer({ arquivo, open, onOpenChange, arquivos = [], onNavig
             </Button>
             <Button variant="ghost" size="icon" onClick={handleDownload}>
               <Download className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
-              <X className="h-5 w-5" />
             </Button>
           </div>
         </DialogHeader>
