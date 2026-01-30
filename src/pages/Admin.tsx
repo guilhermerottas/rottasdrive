@@ -16,10 +16,11 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AppRole } from "@/hooks/useAuth";
 
-const roleLabels: Record<AppRole, { label: string; icon: typeof Crown; color: string }> = {
+const roleLabels: Record<string, { label: string; icon: typeof Crown; color: string }> = {
   admin: { label: "Administrador", icon: Crown, color: "bg-amber-500" },
   editor: { label: "Editor", icon: Edit, color: "bg-blue-500" },
   viewer: { label: "Visualizador", icon: Eye, color: "bg-gray-500" },
+  user: { label: "Usuário", icon: Eye, color: "bg-gray-500" },
 };
 
 const Admin = () => {
