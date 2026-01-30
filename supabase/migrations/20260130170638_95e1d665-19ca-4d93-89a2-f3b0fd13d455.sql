@@ -1,0 +1,3 @@
+-- Adicionar os novos valores ao enum existente
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'editor';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'viewer';
