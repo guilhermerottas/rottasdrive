@@ -27,6 +27,7 @@ export type Database = {
           tamanho: number | null
           tipo: string | null
           updated_at: string
+          uploaded_by: string | null
         }
         Insert: {
           arquivo_url: string
@@ -40,6 +41,7 @@ export type Database = {
           tamanho?: number | null
           tipo?: string | null
           updated_at?: string
+          uploaded_by?: string | null
         }
         Update: {
           arquivo_url?: string
@@ -53,6 +55,7 @@ export type Database = {
           tamanho?: number | null
           tipo?: string | null
           updated_at?: string
+          uploaded_by?: string | null
         }
         Relationships: [
           {
