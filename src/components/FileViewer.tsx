@@ -1,9 +1,13 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, X, Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { Download, X, Star, ChevronLeft, ChevronRight, User, Calendar, HardDrive, FileType, Building2, Info } from "lucide-react";
 import { Arquivo } from "@/hooks/useArquivos";
 import { useIsFavorito, useToggleFavorito } from "@/hooks/useFavoritos";
+import { useObra } from "@/hooks/useObras";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { useState } from "react";
 
 interface FileViewerProps {
   arquivo: Arquivo | null;
@@ -13,9 +17,28 @@ interface FileViewerProps {
   onNavigate?: (arquivo: Arquivo) => void;
 }
 
+const formatSize = (bytes: number | null) => {
+  if (!bytes) return "Desconhecido";
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  return (bytes / (1024 * 1024 * 1024)).toFixed(2) + " GB";
+};
+
+const formatFileType = (tipo: string | null) => {
+  if (!tipo) return "Desconhecido";
+  if (tipo.startsWith("image/")) return tipo.replace("image/", "").toUpperCase();
+  if (tipo.startsWith("video/")) return tipo.replace("video/", "").toUpperCase();
+  if (tipo.startsWith("audio/")) return tipo.replace("audio/", "").toUpperCase();
+  if (tipo === "application/pdf") return "PDF";
+  return tipo.split("/").pop()?.toUpperCase() || tipo;
+};
+
 export function FileViewer({ arquivo, open, onOpenChange, arquivos = [], onNavigate }: FileViewerProps) {
   const { data: isFavorito } = useIsFavorito(arquivo?.id || "");
   const toggleFavorito = useToggleFavorito();
+  const { data: obra } = useObra(arquivo?.obra_id || "");
+  const [showInfo, setShowInfo] = useState(false);
 
   if (!arquivo) return null;
 
@@ -109,10 +132,18 @@ export function FileViewer({ arquivo, open, onOpenChange, arquivos = [], onNavig
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl w-full max-h-[90vh] flex flex-col">
-        <DialogHeader className="flex flex-row items-center justify-between">
+      <DialogContent className="max-w-5xl w-full max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="flex flex-row items-center justify-between p-4 border-b">
           <DialogTitle className="truncate pr-4">{arquivo.nome}</DialogTitle>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowInfo(!showInfo)}
+              className={cn(showInfo && "bg-muted")}
+            >
+              <Info className="h-5 w-5" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"
@@ -135,30 +166,86 @@ export function FileViewer({ arquivo, open, onOpenChange, arquivos = [], onNavig
           </div>
         </DialogHeader>
 
-        <div className="flex-1 flex items-center justify-center relative min-h-0 overflow-auto">
-          {arquivos.length > 1 && (
-            <>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute left-2 z-10"
-                onClick={handlePrev}
-                disabled={!hasPrev}
-              >
-                <ChevronLeft className="h-6 w-6" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-2 z-10"
-                onClick={handleNext}
-                disabled={!hasNext}
-              >
-                <ChevronRight className="h-6 w-6" />
-              </Button>
-            </>
+        <div className="flex-1 flex min-h-0 overflow-hidden">
+          {/* Main content area */}
+          <div className="flex-1 flex items-center justify-center relative overflow-auto p-4">
+            {arquivos.length > 1 && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute left-2 z-10"
+                  onClick={handlePrev}
+                  disabled={!hasPrev}
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2 z-10"
+                  onClick={handleNext}
+                  disabled={!hasNext}
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </Button>
+              </>
+            )}
+            {renderContent()}
+          </div>
+
+          {/* Info sidebar */}
+          {showInfo && (
+            <div className="w-72 border-l bg-muted/30 p-4 overflow-auto">
+              <h3 className="font-semibold mb-4">Informações do arquivo</h3>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <User className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Enviado por</p>
+                    <p className="text-sm font-medium">{arquivo.uploader?.nome || "Desconhecido"}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <Building2 className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Obra</p>
+                    <p className="text-sm font-medium">{obra?.nome || "Carregando..."}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Data de upload</p>
+                    <p className="text-sm font-medium">
+                      {format(new Date(arquivo.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {format(new Date(arquivo.created_at), "HH:mm", { locale: ptBR })}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <HardDrive className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Tamanho</p>
+                    <p className="text-sm font-medium">{formatSize(arquivo.tamanho)}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <FileType className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Formato</p>
+                    <p className="text-sm font-medium">{formatFileType(arquivo.tipo)}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
-          {renderContent()}
         </div>
       </DialogContent>
     </Dialog>
