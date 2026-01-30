@@ -175,9 +175,12 @@ const Admin = () => {
                         </Avatar>
                         <div>
                           <p className="font-medium">{userItem.nome || "Sem nome"}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {userItem.user_id === user?.id && "(Você)"}
-                          </p>
+                          {userItem.email && (
+                            <p className="text-xs text-muted-foreground">{userItem.email}</p>
+                          )}
+                          {userItem.user_id === user?.id && (
+                            <p className="text-xs text-muted-foreground">(Você)</p>
+                          )}
                         </div>
                       </div>
                     </TableCell>
