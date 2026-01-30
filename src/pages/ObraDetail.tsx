@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuthContext } from "@/components/AuthProvider";
 import { usePastas, usePastaBreadcrumb } from "@/hooks/usePastas";
 import { useArquivos, useMoveArquivo, Arquivo } from "@/hooks/useArquivos";
 import { toast } from "sonner";
@@ -23,6 +24,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 
 const ObraDetail = () => {
   const { obraId, pastaId } = useParams<{ obraId: string; pastaId?: string }>();
+  const { canEdit } = useAuthContext();
   const [viewMode, setViewMode] = useState<"list" | "grid" | "masonry">("masonry");
   const [isDragOverRoot, setIsDragOverRoot] = useState(false);
   const [editObraOpen, setEditObraOpen] = useState(false);
@@ -123,8 +125,8 @@ const ObraDetail = () => {
   return (
     <AppLayout>
       <AppHeader 
-        showUpload={true}
-        showNewFolder={true}
+        showUpload={canEdit}
+        showNewFolder={canEdit}
         onUploadClick={() => setUploadOpen(true)}
         onNewFolderClick={() => setCreatePastaOpen(true)}
         searchValue={searchValue}
@@ -159,14 +161,16 @@ const ObraDetail = () => {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-bold truncate">{obra.nome}</h1>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8"
-                  onClick={() => setEditObraOpen(true)}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
+                {canEdit && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8"
+                    onClick={() => setEditObraOpen(true)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
               {obra.endereco && (
                 <p className="text-muted-foreground mt-1 flex items-center gap-1">

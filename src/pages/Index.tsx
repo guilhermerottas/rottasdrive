@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useObras } from "@/hooks/useObras";
+import { useAuthContext } from "@/components/AuthProvider";
 import { ObraCard } from "@/components/ObraCard";
 import { CreateObraDialog } from "@/components/CreateObraDialog";
 import { Building2, Plus } from "lucide-react";
@@ -10,6 +11,7 @@ import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const { data: obras, isLoading } = useObras();
+  const { canEdit } = useAuthContext();
   const [searchValue, setSearchValue] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
 
@@ -33,10 +35,12 @@ const Index = () => {
               Total: {obras?.length || 0} obras
             </p>
           </div>
-          <Button onClick={() => setCreateOpen(true)} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Nova Obra
-          </Button>
+          {canEdit && (
+            <Button onClick={() => setCreateOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Nova Obra
+            </Button>
+          )}
         </div>
 
         {isLoading ? (
@@ -58,10 +62,12 @@ const Index = () => {
             <p className="text-muted-foreground mb-6">
               Comece criando sua primeira obra para organizar seus arquivos.
             </p>
-            <Button onClick={() => setCreateOpen(true)} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Nova Obra
-            </Button>
+            {canEdit && (
+              <Button onClick={() => setCreateOpen(true)} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Nova Obra
+              </Button>
+            )}
           </div>
         )}
       </div>

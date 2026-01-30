@@ -11,10 +11,12 @@ export interface Profile {
   updated_at: string;
 }
 
+export type AppRole = "admin" | "editor" | "viewer";
+
 export interface UserRole {
   id: string;
   user_id: string;
-  role: "admin" | "user";
+  role: AppRole;
   created_at: string;
 }
 
@@ -157,7 +159,21 @@ export const useAuth = () => {
     return { error: null, url: avatarUrl };
   };
 
-  const isAdmin = roles.some((r) => r.role === "admin");
+  // Check if user has a specific role
+  const hasRole = (role: AppRole) => roles.some((r) => r.role === role);
+  
+  // Check if user is admin (level 1)
+  const isAdmin = hasRole("admin");
+  
+  // Check if user can edit (admin or editor - levels 1 and 2)
+  const canEdit = hasRole("admin") || hasRole("editor");
+  
+  // Get the user's primary role
+  const getUserRole = (): AppRole => {
+    if (hasRole("admin")) return "admin";
+    if (hasRole("editor")) return "editor";
+    return "viewer";
+  };
 
   return {
     user,
@@ -166,6 +182,9 @@ export const useAuth = () => {
     roles,
     loading,
     isAdmin,
+    canEdit,
+    hasRole,
+    getUserRole,
     signIn,
     signUp,
     signOut,

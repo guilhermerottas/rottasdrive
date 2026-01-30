@@ -1,8 +1,9 @@
-import { Building2, Star, User } from "lucide-react";
+import { Building2, Star, User, Shield } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useAuthContext } from "@/components/AuthProvider";
 
-const navItems = [
+const baseNavItems = [
   { title: "Obras", url: "/", icon: Building2 },
   { title: "Favoritos", url: "/favoritos", icon: Star },
   { title: "Perfil", url: "/perfil", icon: User },
@@ -10,6 +11,12 @@ const navItems = [
 
 export function MobileBottomNav() {
   const location = useLocation();
+  const { isAdmin } = useAuthContext();
+
+  // Add admin menu item only for admins
+  const navItems = isAdmin 
+    ? [...baseNavItems.slice(0, 2), { title: "Admin", url: "/admin", icon: Shield }, baseNavItems[2]]
+    : baseNavItems;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border shadow-[0_-4px_12px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]">

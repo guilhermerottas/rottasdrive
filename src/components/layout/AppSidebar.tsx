@@ -1,11 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
-import { Building2, Star, User, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { Building2, Star, User, ChevronLeft, ChevronRight, Trash2, Shield } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { cn } from "@/lib/utils";
 import { StorageGauge } from "@/components/StorageGauge";
 import { useState } from "react";
+import { useAuthContext } from "@/components/AuthProvider";
 
-const menuItems = [
+const baseMenuItems = [
   { title: "Obras", url: "/", icon: Building2 },
   { title: "Favoritos", url: "/favoritos", icon: Star },
   { title: "Lixeira", url: "/lixeira", icon: Trash2 },
@@ -15,6 +16,12 @@ const menuItems = [
 export function AppSidebar() {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const { isAdmin } = useAuthContext();
+
+  // Add admin menu item only for admins
+  const menuItems = isAdmin 
+    ? [...baseMenuItems.slice(0, 3), { title: "Admin", url: "/admin", icon: Shield }, baseMenuItems[3]]
+    : baseMenuItems;
 
   return (
     <aside 
