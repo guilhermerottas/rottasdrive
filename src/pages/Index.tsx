@@ -5,8 +5,9 @@ import { useAuthContext } from "@/components/AuthProvider";
 import { ObraCard } from "@/components/ObraCard";
 import { CreateObraDialog } from "@/components/CreateObraDialog";
 import { GlobalSearchResults } from "@/components/GlobalSearchResults";
+import { ObraCardSkeleton } from "@/components/skeletons/ObraCardSkeleton";
+import { AnimatedMasonry, MasonryItem } from "@/components/AnimatedMasonry";
 import { Building2, Plus } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Button } from "@/components/ui/button";
@@ -58,16 +59,27 @@ const Index = () => {
 
             {isLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {[1, 2, 3, 4].map((i) => (
-                  <Skeleton key={i} className="h-64 w-full rounded-xl" />
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                  <ObraCardSkeleton key={i} />
                 ))}
               </div>
             ) : filteredObras && filteredObras.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredObras.map((obra) => (
-                  <ObraCard key={obra.id} obra={obra} />
+              <AnimatedMasonry
+                breakpointCols={{
+                  default: 4,
+                  1536: 4,
+                  1280: 4,
+                  1024: 3,
+                  640: 2,
+                  480: 1,
+                }}
+              >
+                {filteredObras.map((obra, index) => (
+                  <MasonryItem key={obra.id} delay={index * 0.05}>
+                    <ObraCard obra={obra} />
+                  </MasonryItem>
                 ))}
-              </div>
+              </AnimatedMasonry>
             ) : (
               <div className="text-center py-16">
                 <Building2 className="mx-auto h-16 w-16 text-muted-foreground mb-4" />

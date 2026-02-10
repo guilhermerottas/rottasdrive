@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FileText, Image, File, Folder, Building2 } from "lucide-react";
 import { SearchResult } from "@/hooks/useGlobalSearch";
 import { FileViewer } from "./FileViewer";
-import { Skeleton } from "./ui/skeleton";
+import { SearchResultSkeleton } from "./skeletons/SearchResultSkeleton";
 import { useNavigate } from "react-router-dom";
 
 interface GlobalSearchResultsProps {
@@ -47,9 +47,11 @@ export function GlobalSearchResults({ results, isLoading, searchTerm }: GlobalSe
     return (
       <div className="space-y-3">
         <h2 className="text-lg font-semibold">Buscando arquivos...</h2>
-        {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-16 w-full rounded-lg" />
-        ))}
+        <div className="grid gap-3">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <SearchResultSkeleton key={i} />
+          ))}
+        </div>
       </div>
     );
   }

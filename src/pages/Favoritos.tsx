@@ -3,9 +3,10 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { useFavoritos } from "@/hooks/useFavoritos";
 import { ArquivoItem } from "@/components/ArquivoItem";
+import { ArquivoItemSkeleton } from "@/components/skeletons/ArquivoItemSkeleton";
+import { AnimatedMasonry, MasonryItem } from "@/components/AnimatedMasonry";
 import { FileViewer } from "@/components/FileViewer";
 import { Arquivo } from "@/hooks/useArquivos";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Star, Columns3, LayoutGrid, List } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
@@ -67,9 +68,15 @@ export default function Favoritos() {
           </div>
 
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {[...Array(4)].map((_, i) => (
-                <Skeleton key={i} className="h-40 rounded-xl" />
+            <div className={
+              viewMode === "masonry"
+                ? "columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 gap-4"
+                : viewMode === "grid"
+                  ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                  : "flex flex-col gap-2"
+            }>
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                <ArquivoItemSkeleton key={i} viewMode={viewMode} />
               ))}
             </div>
           ) : filteredArquivos.length === 0 ? (
@@ -79,13 +86,24 @@ export default function Favoritos() {
                 {searchValue ? "Nenhum favorito encontrado" : "Você ainda não tem arquivos favoritos"}
               </p>
             </div>
+          ) : viewMode === "masonry" ? (
+            <AnimatedMasonry>
+              {filteredArquivos.map((arquivo, index) => (
+                <MasonryItem key={arquivo.id} delay={index * 0.05}>
+                  <ArquivoItem
+                    arquivo={arquivo}
+                    obraId={arquivo.obra_id}
+                    viewMode={viewMode}
+                    onView={() => handleArquivoClick(arquivo)}
+                  />
+                </MasonryItem>
+              ))}
+            </AnimatedMasonry>
           ) : (
             <div className={
-              viewMode === "masonry"
-                ? "columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 gap-4"
-                : viewMode === "grid"
-                  ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
-                  : "flex flex-col gap-2"
+              viewMode === "grid"
+                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                : "flex flex-col gap-2"
             }>
               {filteredArquivos.map((arquivo) => (
                 <ArquivoItem

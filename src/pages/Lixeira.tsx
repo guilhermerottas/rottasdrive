@@ -1,6 +1,7 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useTrashArquivos, useRestoreArquivo, useDeletePermanently, useEmptyTrash } from "@/hooks/useArquivos";
 import { TrashArquivoItem } from "@/components/TrashArquivoItem";
+import { TrashItemSkeleton } from "@/components/skeletons/TrashItemSkeleton";
 import { Button } from "@/components/ui/button";
 import { Trash2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
@@ -97,8 +98,10 @@ export default function Lixeira() {
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <div className="space-y-2">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <TrashItemSkeleton key={i} />
+            ))}
           </div>
         ) : !trashArquivos || trashArquivos.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">

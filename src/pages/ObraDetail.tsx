@@ -15,6 +15,9 @@ import { ArquivoItem } from "@/components/ArquivoItem";
 import { ArquivosTableView } from "@/components/ArquivosTableView";
 import { FileViewer } from "@/components/FileViewer";
 import { SelectionToolbar } from "@/components/SelectionToolbar";
+import { PastaItemSkeleton } from "@/components/skeletons/PastaItemSkeleton";
+import { ArquivoItemSkeleton } from "@/components/skeletons/ArquivoItemSkeleton";
+import { AnimatedMasonry, MasonryItem } from "@/components/AnimatedMasonry";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -264,11 +267,31 @@ const ObraDetail = () => {
 
         {/* Content */}
         {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Skeleton key={i} className="aspect-square rounded-xl" />
-            ))}
-          </div>
+          <>
+            {/* Pastas Skeleton */}
+            <div className="mb-6">
+              <Skeleton className="h-5 w-20 mb-3" />
+              <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                {[1, 2, 3, 4].map((i) => (
+                  <PastaItemSkeleton key={i} />
+                ))}
+              </div>
+            </div>
+
+            {/* Arquivos Skeleton */}
+            <div>
+              <Skeleton className="h-5 w-24 mb-3" />
+              <div className={
+                viewMode === "masonry"
+                  ? "columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 gap-4"
+                  : "grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+              }>
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                  <ArquivoItemSkeleton key={i} viewMode={viewMode} />
+                ))}
+              </div>
+            </div>
+          </>
         ) : (
           <>
             {/* Pastas */}
@@ -323,19 +346,31 @@ const ObraDetail = () => {
                     onSelectAll={selectAll}
                     onClearSelection={clearSelection}
                   />
+                ) : viewMode === "masonry" ? (
+                  <AnimatedMasonry>
+                    {filteredArquivos.map((arquivo, index) => (
+                      <MasonryItem key={arquivo.id} delay={index * 0.05}>
+                        <ArquivoItem
+                          arquivo={arquivo}
+                          obraId={obraId!}
+                          viewMode={viewMode}
+                          onView={() => {
+                            setSelectedArquivo(arquivo);
+                            setViewerOpen(true);
+                          }}
+                          isSelected={isSelected(arquivo.id)}
+                          onToggleSelection={() => toggleSelection(arquivo.id)}
+                        />
+                      </MasonryItem>
+                    ))}
+                  </AnimatedMasonry>
                 ) : (
-                  <div
-                    className={
-                      viewMode === "masonry"
-                        ? "columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 gap-4"
-                        : "grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
-                    }
-                  >
+                  <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                     {filteredArquivos.map((arquivo) => (
-                      <ArquivoItem 
-                        key={arquivo.id} 
-                        arquivo={arquivo} 
-                        obraId={obraId!} 
+                      <ArquivoItem
+                        key={arquivo.id}
+                        arquivo={arquivo}
+                        obraId={obraId!}
                         viewMode={viewMode}
                         onView={() => {
                           setSelectedArquivo(arquivo);

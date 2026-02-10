@@ -1,0 +1,19 @@
+.masonry-grid {
+  display: flex;
+  margin-left: -16px; /* gutter size offset */
+  width: auto;
+}
+
+.masonry-grid_column {
+  padding-left: 16px; /* gutter size */
+  background-clip: padding-box;
+}
+
+.masonry-item {
+  margin-bottom: 16px;
+}
+
+/* Remove margin bottom from the last item in each column */
+.masonry-grid_column > .masonry-item:last-child {
+  margin-bottom: 0;
+}
