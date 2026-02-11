@@ -66,7 +66,7 @@ const Folder = ({ color = '#5227FF', size = 1, items = [], className = '' }) => 
         '--paper-1': paper1,
         '--paper-2': paper2,
         '--paper-3': paper3
-    };
+    } as React.CSSProperties;
 
     const folderClassName = `folder ${open ? 'open' : ''}`.trim();
     const scaleStyle = { transform: `scale(${size})` };
@@ -86,7 +86,7 @@ const Folder = ({ color = '#5227FF', size = 1, items = [], className = '' }) => 
                                     ? {
                                         '--magnet-x': `${paperOffsets[i]?.x || 0}px`,
                                         '--magnet-y': `${paperOffsets[i]?.y || 0}px`
-                                    }
+                                    } as React.CSSProperties
                                     : {}
                             }
                         >
