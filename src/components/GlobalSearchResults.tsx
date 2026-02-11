@@ -83,7 +83,7 @@ export function GlobalSearchResults({ results, isLoading, searchTerm }: GlobalSe
         {results.map((file) => (
           <div
             key={file.id}
-            className="flex items-center gap-2.5 sm:gap-4 p-2.5 sm:p-4 bg-card border border-border rounded-lg hover:bg-accent/50 transition-colors cursor-pointer group"
+            className="flex items-center gap-2.5 sm:gap-4 p-2.5 sm:p-4 bg-card border border-border rounded-lg hover:bg-accent/50 transition-colors cursor-pointer group max-w-[350px] w-full"
             onClick={() => handleFileClick(file)}
           >
             {/* File thumbnail or icon */}
