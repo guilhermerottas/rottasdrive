@@ -83,59 +83,61 @@ export function GlobalSearchResults({ results, isLoading, searchTerm }: GlobalSe
         {results.map((file) => (
           <div
             key={file.id}
-            className="flex items-center gap-4 p-4 bg-card border border-border rounded-lg hover:bg-accent/50 transition-colors cursor-pointer group"
+            className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-card border border-border rounded-lg hover:bg-accent/50 transition-colors cursor-pointer group"
             onClick={() => handleFileClick(file)}
           >
-            {/* File thumbnail or icon */}
-            <div className="flex-shrink-0 w-[100px] h-[100px] rounded-lg overflow-hidden bg-muted flex items-center justify-center">
-              {file.tipo?.startsWith("image/") ? (
-                <img
-                  src={file.arquivo_url}
-                  alt={file.nome}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="flex items-center justify-center w-full h-full">
-                  {getFileIcon(file.tipo)}
-                </div>
-              )}
-            </div>
-
-            {/* File info */}
-            <div className="flex-1 min-w-0">
-              <p className="font-medium truncate">{file.nome}</p>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                <span className="flex items-center gap-1">
-                  <Building2 className="h-3 w-3" />
-                  {file.obra_nome}
-                </span>
-                {file.pasta_nome && (
-                  <>
-                    <span>/</span>
-                    <span className="flex items-center gap-1">
-                      <Folder className="h-3 w-3" />
-                      {file.pasta_nome}
-                    </span>
-                  </>
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              {/* File thumbnail or icon */}
+              <div className="flex-shrink-0 w-12 h-12 sm:w-[100px] sm:h-[100px] rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+                {file.tipo?.startsWith("image/") ? (
+                  <img
+                    src={file.arquivo_url}
+                    alt={file.nome}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center w-full h-full">
+                    {getFileIcon(file.tipo)}
+                  </div>
                 )}
+              </div>
+
+              {/* File info */}
+              <div className="flex-1 min-w-0">
+                <p className="font-medium truncate text-sm sm:text-base">{file.nome}</p>
+                <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-muted-foreground mt-1 flex-wrap">
+                  <span className="flex items-center gap-1">
+                    <Building2 className="h-3 w-3" />
+                    <span className="truncate max-w-[120px] sm:max-w-none">{file.obra_nome}</span>
+                  </span>
+                  {file.pasta_nome && (
+                    <>
+                      <span>/</span>
+                      <span className="flex items-center gap-1">
+                        <Folder className="h-3 w-3" />
+                        <span className="truncate max-w-[100px] sm:max-w-none">{file.pasta_nome}</span>
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* File size */}
-            <div className="flex-shrink-0 text-sm text-muted-foreground hidden sm:block">
-              {formatFileSize(file.tamanho)}
+            {/* Bottom row on mobile: size + button */}
+            <div className="flex items-center justify-between w-full sm:w-auto sm:gap-4 pl-15 sm:pl-0">
+              <span className="text-xs sm:text-sm text-muted-foreground">
+                {formatFileSize(file.tamanho)}
+              </span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleNavigateToLocation(file);
+                }}
+                className="flex-shrink-0 px-3 py-1 text-xs bg-primary/10 text-primary rounded-md sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:bg-primary/20"
+              >
+                Ir para pasta
+              </button>
             </div>
-
-            {/* Navigate button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleNavigateToLocation(file);
-              }}
-              className="flex-shrink-0 px-3 py-1 text-xs bg-primary/10 text-primary rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary/20"
-            >
-              Ir para pasta
-            </button>
           </div>
         ))}
       </div>
