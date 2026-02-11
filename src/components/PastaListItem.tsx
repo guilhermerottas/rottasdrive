@@ -32,19 +32,21 @@ interface PastaListItemProps {
 }
 
 const colorOptions: { value: PastaColor; label: string; color: string }[] = [
-  { value: "default", label: "Laranja", color: "bg-primary" },
-  { value: "documents", label: "Azul", color: "bg-[#4DB8FF]" },
-  { value: "photos", label: "Verde", color: "bg-[#34C759]" },
-  { value: "videos", label: "Amarelo", color: "bg-[#FFB800]" },
-  { value: "music", label: "Roxo", color: "bg-[#9747FF]" },
+  { value: "default", label: "Laranja", color: "bg-[#f6942a]" },
+  { value: "yellow", label: "Amarelo", color: "bg-[#f9c75e]" },
+  { value: "blue", label: "Azul", color: "bg-[#427bde]" },
+  { value: "gray", label: "Cinza", color: "bg-[#53575b]" },
+  { value: "orange_dark", label: "Laranja Escuro", color: "bg-[#f67425]" },
+  { value: "beige", label: "Bege", color: "bg-[#eeeeda]" },
 ];
 
 const folderColors: Record<PastaColor, string> = {
-  default: "text-primary",
-  documents: "text-[#4A9EFF]",
-  photos: "text-[#34C759]",
-  videos: "text-[#FFB800]",
-  music: "text-[#9747FF]",
+  default: "text-[#f6942a]",
+  yellow: "text-[#f9c75e]",
+  blue: "text-[#427bde]",
+  gray: "text-[#53575b]",
+  orange_dark: "text-[#f67425]",
+  beige: "text-[#eeeeda]",
 };
 
 export function PastaListItem({ pasta }: PastaListItemProps) {
@@ -63,7 +65,7 @@ export function PastaListItem({ pasta }: PastaListItemProps) {
         .select("*", { count: "exact", head: true })
         .eq("pasta_id", pasta.id)
         .is("deleted_at", null);
-      
+
       if (error) throw error;
       return count || 0;
     },
@@ -101,7 +103,7 @@ export function PastaListItem({ pasta }: PastaListItemProps) {
       if (!data) return;
 
       const { arquivoId, arquivoNome } = JSON.parse(data);
-      
+
       await moveArquivo.mutateAsync({ id: arquivoId, pastaId: pasta.id });
       toast.success(`"${arquivoNome}" movido para "${pasta.nome}"`);
     } catch (error) {
@@ -112,7 +114,7 @@ export function PastaListItem({ pasta }: PastaListItemProps) {
   const formattedDate = format(new Date(pasta.created_at), "dd MMM yyyy", { locale: ptBR });
 
   return (
-    <div 
+    <div
       className={cn(
         "group relative flex items-center gap-4 p-3 rounded-xl transition-all duration-200",
         "bg-card hover:bg-accent/50 border border-border/50",
@@ -130,7 +132,7 @@ export function PastaListItem({ pasta }: PastaListItemProps) {
         <div className={cn("flex-shrink-0", folderColor)}>
           <Folder className="h-10 w-10 fill-current" />
         </div>
-        
+
         {/* Info */}
         <div className="flex-1 min-w-0">
           <span className="text-base font-medium text-foreground truncate block">

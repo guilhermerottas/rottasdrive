@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export type PastaColor = "default" | "documents" | "photos" | "videos" | "music";
+export type PastaColor = "default" | "yellow" | "blue" | "gray" | "orange_dark" | "beige";
 
 export interface Pasta {
   id: string;

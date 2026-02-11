@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
 import { UserProfileButton } from "@/components/UserProfileButton";
+import { UploadHistoryButton } from "@/components/UploadHistoryButton";
 
 interface AppHeaderProps {
   onUploadClick?: () => void;
@@ -13,10 +14,10 @@ interface AppHeaderProps {
   showNewFolder?: boolean;
 }
 
-export function AppHeader({ 
-  onUploadClick, 
+export function AppHeader({
+  onUploadClick,
   onNewFolderClick,
-  searchValue = "", 
+  searchValue = "",
   onSearchChange,
   showUpload = false,
   showNewFolder = false
@@ -28,9 +29,9 @@ export function AppHeader({
         {showNewFolder && onNewFolderClick && (
           <>
             {/* Desktop: with text */}
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={onNewFolderClick}
               className="hidden sm:flex"
             >
@@ -38,9 +39,9 @@ export function AppHeader({
               Nova Pasta
             </Button>
             {/* Mobile: icon only */}
-            <Button 
-              variant="outline" 
-              size="icon" 
+            <Button
+              variant="outline"
+              size="icon"
               onClick={onNewFolderClick}
               className="sm:hidden h-9 w-9"
             >
@@ -59,9 +60,9 @@ export function AppHeader({
               Upload
             </HoverBorderGradient>
             {/* Mobile: icon only */}
-            <Button 
-              variant="default" 
-              size="icon" 
+            <Button
+              variant="default"
+              size="icon"
               onClick={onUploadClick}
               className="sm:hidden h-9 w-9"
             >
@@ -95,7 +96,8 @@ export function AppHeader({
       </div>
 
       {/* RIGHT: User profile */}
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 flex items-center gap-2">
+        <UploadHistoryButton />
         <UserProfileButton />
       </div>
     </header>

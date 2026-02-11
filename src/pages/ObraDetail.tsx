@@ -129,7 +129,7 @@ const ObraDetail = () => {
 
   return (
     <AppLayout>
-      <AppHeader 
+      <AppHeader
         showUpload={canEdit}
         showNewFolder={canEdit}
         onUploadClick={() => setUploadOpen(true)}
@@ -137,7 +137,7 @@ const ObraDetail = () => {
         searchValue={searchValue}
         onSearchChange={setSearchValue}
       />
-      
+
       <div className="flex-1 overflow-auto p-6">
         {/* Header with obra info */}
         <div className="mb-6">
@@ -147,29 +147,29 @@ const ObraDetail = () => {
               Voltar às Obras
             </Button>
           </Link>
-          
+
           <div className="flex items-start gap-4">
             {/* Obra Photo */}
             <div className="rounded-xl overflow-hidden bg-muted flex-shrink-0 flex items-center justify-center shadow-sm" style={{ width: 100, height: 100 }}>
               {obra.foto_url ? (
-                <img 
-                  src={obra.foto_url} 
-                  alt={obra.nome} 
+                <img
+                  src={obra.foto_url}
+                  alt={obra.nome}
                   className="h-full w-full object-cover"
                 />
               ) : (
                 <Building2 className="h-10 w-10 text-muted-foreground" />
               )}
             </div>
-            
+
             {/* Obra Info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-bold truncate">{obra.nome}</h1>
                 {canEdit && (
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     className="h-8 w-8"
                     onClick={() => setEditObraOpen(true)}
                   >
@@ -193,11 +193,10 @@ const ObraDetail = () => {
         {/* Breadcrumb - also drop target for root */}
         <nav className="flex items-center gap-2 text-sm mb-6 flex-wrap">
           <div
-            className={`flex items-center gap-1 px-2 py-1 rounded transition-colors ${
-              isDragOverRoot 
-                ? "bg-primary/10 ring-2 ring-primary ring-dashed" 
+            className={`flex items-center gap-1 px-2 py-1 rounded transition-colors ${isDragOverRoot
+                ? "bg-primary/10 ring-2 ring-primary ring-dashed"
                 : ""
-            }`}
+              }`}
             onDragOver={(e) => {
               e.preventDefault();
               e.dataTransfer.dropEffect = "move";
@@ -208,7 +207,7 @@ const ObraDetail = () => {
               e.preventDefault();
               setIsDragOverRoot(false);
               if (!pastaId) return;
-              
+
               try {
                 const data = e.dataTransfer.getData("application/json");
                 if (!data) return;
@@ -233,11 +232,10 @@ const ObraDetail = () => {
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
               <Link
                 to={`/obra/${obraId}/pasta/${pasta.id}`}
-                className={`flex items-center gap-1 ${
-                  pasta.id === pastaId
+                className={`flex items-center gap-1 ${pasta.id === pastaId
                     ? "text-foreground font-medium"
                     : "text-muted-foreground hover:text-foreground"
-                } transition-colors`}
+                  } transition-colors`}
               >
                 <Folder className="h-4 w-4" />
                 <span>{pasta.nome}</span>
@@ -297,7 +295,7 @@ const ObraDetail = () => {
             {/* Pastas */}
             {filteredPastas && filteredPastas.length > 0 && (
               <div className="mb-6">
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-8">
                   <h2 className="text-sm font-medium text-muted-foreground">Pastas</h2>
                   <ToggleGroup
                     type="single"

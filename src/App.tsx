@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuthContext } from "@/components/AuthProvider";
+import { UploadProvider } from "./contexts/UploadContext";
+import { UploadProgress } from "./components/UploadProgress";
 import Index from "./pages/Index";
 import ObraDetail from "./pages/ObraDetail";
 import Favoritos from "./pages/Favoritos";
@@ -72,7 +74,10 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <AppRoutes />
+          <UploadProvider>
+            <AppRoutes />
+            <UploadProgress />
+          </UploadProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

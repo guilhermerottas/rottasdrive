@@ -1,77 +1,27 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AppHeader } from "@/components/layout/AppHeader";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Camera, User, Mail, Lock, LogOut } from "lucide-react";
-import { useState, useRef } from "react";
-import { toast } from "sonner";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { User, Mail, Calendar, Shield, Edit } from "lucide-react";
+import { useState } from "react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Badge } from "@/components/ui/badge";
+import { UserProfileDialog } from "@/components/UserProfileDialog";
 
 export default function Perfil() {
-  const { user, profile, signOut, updateProfile, updateEmail, updatePassword, uploadAvatar } = useAuth();
-  const [nome, setNome] = useState(profile?.nome || "");
-  const [email, setEmail] = useState(user?.email || "");
-  const [newPassword, setNewPassword] = useState("");
-  const [saving, setSaving] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user, profile, getUserRole } = useAuthContext();
+  const [profileOpen, setProfileOpen] = useState(false);
 
-  const handleUpdateProfile = async () => {
-    setSaving(true);
-    try {
-      await updateProfile({ nome });
-      toast.success("Perfil atualizado com sucesso!");
-    } catch (error) {
-      toast.error("Erro ao atualizar perfil");
-    } finally {
-      setSaving(false);
-    }
-  };
+  const role = getUserRole();
 
-  const handleUpdateEmail = async () => {
-    setSaving(true);
-    try {
-      await updateEmail(email);
-      toast.success("E-mail de confirmação enviado!");
-    } catch (error) {
-      toast.error("Erro ao atualizar e-mail");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleUpdatePassword = async () => {
-    if (!newPassword || newPassword.length < 6) {
-      toast.error("A senha deve ter pelo menos 6 caracteres");
-      return;
-    }
-    setSaving(true);
-    try {
-      await updatePassword(newPassword);
-      setNewPassword("");
-      toast.success("Senha atualizada com sucesso!");
-    } catch (error) {
-      toast.error("Erro ao atualizar senha");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setSaving(true);
-    try {
-      await uploadAvatar(file);
-      toast.success("Foto atualizada com sucesso!");
-    } catch (error) {
-      toast.error("Erro ao atualizar foto");
-    } finally {
-      setSaving(false);
-    }
+  const roleLabels: Record<string, string> = {
+    admin: "Administrador",
+    editor: "Editor",
+    viewer: "Visualizador",
+    user: "Usuário"
   };
 
   const initials = profile?.nome
@@ -83,124 +33,87 @@ export default function Perfil() {
 
   return (
     <AppLayout>
-      <AppHeader searchValue="" onSearchChange={() => {}} />
+      <AppHeader searchValue="" onSearchChange={() => { }} />
 
       <main className="flex-1 p-6 overflow-auto">
         <div className="max-w-2xl mx-auto space-y-6">
-          <h1 className="text-2xl font-bold">Meu Perfil</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold">Meu Perfil</h1>
+            <Button onClick={() => setProfileOpen(true)}>
+              <Edit className="mr-2 h-4 w-4" />
+              Editar Perfil
+            </Button>
+          </div>
 
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Informações Pessoais
+            <CardHeader className="text-center pb-2">
+              <div className="flex justify-center mb-4">
+                <Avatar className="h-32 w-32 border-4 border-background shadow-xl">
+                  <AvatarImage src={profile?.avatar_url || undefined} />
+                  <AvatarFallback className="text-4xl bg-primary text-primary-foreground">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+              <CardTitle className="text-3xl font-bold">
+                {profile?.nome || "Usuário sem nome"}
               </CardTitle>
-              <CardDescription>Atualize suas informações pessoais</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <Avatar className="h-20 w-20">
-                    <AvatarImage src={profile?.avatar_url || undefined} />
-                    <AvatarFallback className="text-xl">{initials}</AvatarFallback>
-                  </Avatar>
-                  <Button
-                    size="icon"
-                    variant="secondary"
-                    className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Camera className="h-4 w-4" />
-                  </Button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleAvatarChange}
-                  />
+            <CardContent className="space-y-6 mt-4">
+
+              <div className="grid gap-4 md:grid-cols-2">
+                {/* Email */}
+                <div className="flex flex-col space-y-2 p-4 border rounded-lg bg-muted/20">
+                  <span className="text-sm text-muted-foreground flex items-center gap-2">
+                    <Mail className="h-4 w-4" /> E-mail
+                  </span>
+                  <span className="font-medium truncate" title={user?.email}>
+                    {user?.email}
+                  </span>
                 </div>
-                <div className="flex-1">
-                  <Label htmlFor="nome">Nome</Label>
-                  <Input
-                    id="nome"
-                    value={nome}
-                    onChange={(e) => setNome(e.target.value)}
-                    placeholder="Seu nome"
-                  />
+
+                {/* Nível de Acesso */}
+                <div className="flex flex-col space-y-2 p-4 border rounded-lg bg-muted/20">
+                  <span className="text-sm text-muted-foreground flex items-center gap-2">
+                    <Shield className="h-4 w-4" /> Nível de Acesso
+                  </span>
+                  <div className="flex">
+                    <Badge variant={role === 'admin' ? 'default' : 'secondary'} className="capitalize">
+                      {roleLabels[role] || role}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Data de Cadastro */}
+                <div className="flex flex-col space-y-2 p-4 border rounded-lg bg-muted/20">
+                  <span className="text-sm text-muted-foreground flex items-center gap-2">
+                    <Calendar className="h-4 w-4" /> Desde
+                  </span>
+                  <span className="font-medium">
+                    {profile?.created_at
+                      ? format(new Date(profile.created_at), "dd 'de' MMMM, yyyy", { locale: ptBR })
+                      : "-"
+                    }
+                  </span>
+                </div>
+
+                {/* User ID (Optional/Technical) */}
+                <div className="flex flex-col space-y-2 p-4 border rounded-lg bg-muted/20">
+                  <span className="text-sm text-muted-foreground flex items-center gap-2">
+                    <User className="h-4 w-4" /> ID de Usuário
+                  </span>
+                  <span className="font-mono text-xs text-muted-foreground truncate" title={user?.id}>
+                    {user?.id}
+                  </span>
                 </div>
               </div>
-              <Button onClick={handleUpdateProfile} disabled={saving}>
-                Salvar Nome
-              </Button>
-            </CardContent>
-          </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Mail className="h-5 w-5" />
-                E-mail
-              </CardTitle>
-              <CardDescription>Altere seu endereço de e-mail</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="email">E-mail</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="seu@email.com"
-                />
-              </div>
-              <Button onClick={handleUpdateEmail} disabled={saving}>
-                Atualizar E-mail
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Lock className="h-5 w-5" />
-                Senha
-              </CardTitle>
-              <CardDescription>Altere sua senha de acesso</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="password">Nova Senha</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Mínimo 6 caracteres"
-                />
-              </div>
-              <Button onClick={handleUpdatePassword} disabled={saving}>
-                Atualizar Senha
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="border-destructive">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-destructive">
-                <LogOut className="h-5 w-5" />
-                Sair da Conta
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Button variant="destructive" onClick={signOut}>
-                Sair
-              </Button>
             </CardContent>
           </Card>
         </div>
       </main>
+
+      <UserProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
     </AppLayout>
   );
 }

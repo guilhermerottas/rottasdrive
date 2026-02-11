@@ -24,50 +24,28 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import Folder from "@/components/Folder";
 
 interface PastaItemProps {
   pasta: Pasta;
 }
 
-const folderVariants = {
-  documents: {
-    bodyGradient: "bg-gradient-to-br from-[#B3E0FF] via-[#7EC8FF] to-[#4A9EFF]",
-    tabGradient: "bg-gradient-to-b from-[#4A9EFF] to-[#3B8FEF]",
-    shadow: "shadow-[0_8px_24px_rgba(74,158,255,0.35)]",
-    bottomGlow: "bg-[radial-gradient(ellipse,rgba(74,158,255,0.4)_0%,transparent_70%)]",
-  },
-  photos: {
-    bodyGradient: "bg-gradient-to-br from-[#99E6A3] via-[#66D97E] to-[#34C759]",
-    tabGradient: "bg-gradient-to-b from-[#34C759] to-[#2DB84E]",
-    shadow: "shadow-[0_8px_24px_rgba(52,199,89,0.35)]",
-    bottomGlow: "bg-[radial-gradient(ellipse,rgba(52,199,89,0.4)_0%,transparent_70%)]",
-  },
-  videos: {
-    bodyGradient: "bg-gradient-to-br from-[#FFDB66] via-[#FFC933] to-[#FFB800]",
-    tabGradient: "bg-gradient-to-b from-[#FFB800] to-[#E5A600]",
-    shadow: "shadow-[0_8px_24px_rgba(255,184,0,0.35)]",
-    bottomGlow: "bg-[radial-gradient(ellipse,rgba(255,184,0,0.4)_0%,transparent_70%)]",
-  },
-  music: {
-    bodyGradient: "bg-gradient-to-br from-[#D4B8FF] via-[#B88CFF] to-[#9747FF]",
-    tabGradient: "bg-gradient-to-b from-[#9747FF] to-[#8840E5]",
-    shadow: "shadow-[0_8px_24px_rgba(151,71,255,0.35)]",
-    bottomGlow: "bg-[radial-gradient(ellipse,rgba(151,71,255,0.4)_0%,transparent_70%)]",
-  },
-  default: {
-    bodyGradient: "bg-gradient-to-br from-[#FAC771] via-[#F7B13E] to-[#F49B0B]",
-    tabGradient: "bg-gradient-to-b from-[#F49B0B] to-[#D68609]",
-    shadow: "shadow-[0_8px_24px_rgba(244,155,11,0.35)]",
-    bottomGlow: "bg-[radial-gradient(ellipse,rgba(244,155,11,0.4)_0%,transparent_70%)]",
-  },
+const folderColors = {
+  default: "#f6942a",      // Laranja (PADRÃO)
+  yellow: "#f9c75e",       // Amarelo
+  blue: "#427bde",         // Azul
+  gray: "#53575b",         // Cinza
+  orange_dark: "#f67425",  // Laranja escuro
+  beige: "#eeeeda",        // Bege claro
 };
 
 const colorOptions: { value: PastaColor; label: string; color: string }[] = [
-  { value: "default", label: "Laranja", color: "bg-primary" },
-  { value: "documents", label: "Azul", color: "bg-[#4DB8FF]" },
-  { value: "photos", label: "Verde", color: "bg-[#34C759]" },
-  { value: "videos", label: "Amarelo", color: "bg-[#FFB800]" },
-  { value: "music", label: "Roxo", color: "bg-[#9747FF]" },
+  { value: "default", label: "Laranja", color: "bg-[#f6942a]" },
+  { value: "yellow", label: "Amarelo", color: "bg-[#f9c75e]" },
+  { value: "blue", label: "Azul", color: "bg-[#427bde]" },
+  { value: "gray", label: "Cinza", color: "bg-[#53575b]" },
+  { value: "orange_dark", label: "Laranja Escuro", color: "bg-[#f67425]" },
+  { value: "beige", label: "Bege", color: "bg-[#eeeeda]" },
 ];
 
 export function PastaItem({ pasta }: PastaItemProps) {
@@ -87,14 +65,14 @@ export function PastaItem({ pasta }: PastaItemProps) {
         .select("*", { count: "exact", head: true })
         .eq("pasta_id", pasta.id)
         .is("deleted_at", null);
-      
+
       if (error) throw error;
       return count || 0;
     },
   });
 
   const currentColor = (pasta.cor as PastaColor) || "default";
-  const styles = folderVariants[currentColor];
+  const folderColor = folderColors[currentColor];
 
   const handleDelete = async () => {
     try {
@@ -125,7 +103,7 @@ export function PastaItem({ pasta }: PastaItemProps) {
       if (!data) return;
 
       const { arquivoId, arquivoNome } = JSON.parse(data);
-      
+
       await moveArquivo.mutateAsync({ id: arquivoId, pastaId: pasta.id });
       toast.success(`"${arquivoNome}" movido para "${pasta.nome}"`);
     } catch (error) {
@@ -134,7 +112,7 @@ export function PastaItem({ pasta }: PastaItemProps) {
   };
 
   return (
-    <div 
+    <div
       className="group relative w-[180px] h-[160px] cursor-pointer"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -210,54 +188,29 @@ export function PastaItem({ pasta }: PastaItemProps) {
       <Link
         to={`/obra/${pasta.obra_id}/pasta/${pasta.id}`}
         className={cn(
-          "block w-full h-full transition-transform duration-300 ease-out",
+          "flex flex-col items-center justify-center w-full h-full p-4 transition-transform duration-300 ease-out",
           isDragOver ? "scale-105" : "",
           isPressed ? "scale-95" : "hover:-translate-y-2"
         )}
       >
-        {/* Folder Structure */}
-        <div className="relative w-[140px] h-[100px] mx-auto">
-          {/* Bottom Shadow/Glow */}
-          <div 
+        {/* New Folder Component */}
+        <div className="relative flex items-center justify-center mb-2">
+          <Folder
+            color={folderColor}
+            size={1.1}
             className={cn(
-              "absolute -bottom-1 left-[10px] right-[10px] h-2 blur-[4px] z-0",
-              styles.bottomGlow
+              "transition-all",
+              isDragOver && "ring-2 ring-white ring-offset-2 rounded-lg"
             )}
           />
-          
-          {/* Folder Tab */}
-          <div 
-            className={cn(
-              "absolute top-0 left-6 w-[50px] h-4 rounded-t-lg z-[1]",
-              styles.tabGradient,
-              "shadow-[inset_0_-2px_4px_rgba(0,0,0,0.1)]"
-            )}
-          />
-          
-          {/* Folder Body */}
-          <div 
-            className={cn(
-              "absolute top-3 left-0 w-[140px] h-[90px] rounded-[10px] z-[2] overflow-hidden",
-              styles.bodyGradient,
-              styles.shadow,
-              "shadow-[inset_0_2px_8px_rgba(255,255,255,0.4),inset_0_-2px_8px_rgba(0,0,0,0.1)]",
-              isDragOver && "ring-2 ring-white ring-offset-2"
-            )}
-          >
-            {/* Glass Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/10 to-transparent z-[3]" />
-            
-            {/* Gloss Effect */}
-            <div className="absolute top-2 left-2 right-2 h-[30px] bg-gradient-to-b from-white/60 to-transparent rounded-[6px] z-[4]" />
-          </div>
         </div>
 
         {/* Folder Label */}
-        <div className="absolute bottom-0 left-0 right-0 text-center px-2">
-          <span className="text-sm font-semibold text-foreground truncate block">
+        <div className="text-center w-full">
+          <span className="text-sm font-semibold text-foreground truncate block w-full px-1">
             {pasta.nome}
           </span>
-          <span className="text-xs text-muted-foreground flex items-center justify-center gap-1 mt-0.5">
+          <span className="text-xs text-muted-foreground flex items-center justify-center gap-1 mt-1">
             <FileText className="h-3 w-3" />
             {arquivosCount} {arquivosCount === 1 ? "arquivo" : "arquivos"}
           </span>

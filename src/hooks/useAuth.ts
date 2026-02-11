@@ -49,7 +49,7 @@ export const useAuth = () => {
       async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
           setTimeout(() => {
             fetchProfile(session.user.id);
@@ -66,7 +66,7 @@ export const useAuth = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
+
       if (session?.user) {
         fetchProfile(session.user.id);
         fetchRoles(session.user.id);
@@ -91,9 +91,9 @@ export const useAuth = () => {
 
       if (isBlocked) {
         await supabase.auth.signOut();
-        return { 
-          data: null, 
-          error: { message: "Sua conta foi bloqueada. Entre em contato com o administrador." } 
+        return {
+          data: null,
+          error: { message: "Sua conta foi bloqueada. Entre em contato com o administrador." }
         };
       }
     }
@@ -123,16 +123,21 @@ export const useAuth = () => {
 
   const updateProfile = async (updates: Partial<Profile>) => {
     if (!user) return { error: new Error("Not authenticated") };
-    
+
     const { error } = await supabase
       .from("profiles")
-      .update(updates)
-      .eq("user_id", user.id);
-    
+      .upsert({
+        ...updates,
+        user_id: user.id,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'user_id'
+      });
+
     if (!error) {
       await fetchProfile(user.id);
     }
-    
+
     return { error };
   };
 
@@ -169,7 +174,7 @@ export const useAuth = () => {
       .getPublicUrl(fileName);
 
     const avatarUrl = `${publicUrl.publicUrl}?t=${Date.now()}`;
-    
+
     await updateProfile({ avatar_url: avatarUrl });
 
     return { error: null, url: avatarUrl };
@@ -177,13 +182,13 @@ export const useAuth = () => {
 
   // Check if user has a specific role
   const hasRole = (role: AppRole) => roles.some((r) => r.role === role);
-  
+
   // Check if user is admin (level 1)
   const isAdmin = hasRole("admin");
-  
+
   // Check if user can edit (admin or editor - levels 1 and 2)
   const canEdit = hasRole("admin") || hasRole("editor");
-  
+
   // Get the user's primary role
   const getUserRole = (): AppRole => {
     if (hasRole("admin")) return "admin";

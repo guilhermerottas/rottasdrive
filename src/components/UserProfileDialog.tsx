@@ -20,9 +20,9 @@ interface UserProfileDialogProps {
 export const UserProfileDialog = ({ open, onOpenChange }: UserProfileDialogProps) => {
   const { user, profile, isAdmin, signOut, updateProfile, updateEmail, updatePassword, uploadAvatar } = useAuthContext();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
+
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -32,9 +32,7 @@ export const UserProfileDialog = ({ open, onOpenChange }: UserProfileDialogProps
     if (profile) {
       setNome(profile.nome || "");
     }
-    if (user) {
-      setEmail(user.email || "");
-    }
+
   }, [profile, user]);
 
   const handleAvatarClick = () => {
@@ -81,21 +79,7 @@ export const UserProfileDialog = ({ open, onOpenChange }: UserProfileDialogProps
     setLoading(false);
   };
 
-  const handleUpdateEmail = async () => {
-    if (!email.trim()) {
-      toast.error("Email é obrigatório");
-      return;
-    }
 
-    setLoading(true);
-    const { error } = await updateEmail(email);
-    if (error) {
-      toast.error("Erro ao atualizar email: " + error.message);
-    } else {
-      toast.success("Email de confirmação enviado para o novo endereço!");
-    }
-    setLoading(false);
-  };
 
   const handleUpdatePassword = async () => {
     if (newPassword.length < 6) {
@@ -194,24 +178,7 @@ export const UserProfileDialog = ({ open, onOpenChange }: UserProfileDialogProps
             </div>
           </div>
 
-          {/* Email */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <Mail className="h-4 w-4" />
-              Email
-            </Label>
-            <div className="flex gap-2">
-              <Input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="seu@email.com"
-              />
-              <Button onClick={handleUpdateEmail} disabled={loading} size="sm">
-                Salvar
-              </Button>
-            </div>
-          </div>
+
 
           {/* Password */}
           <div className="space-y-2">
@@ -248,7 +215,7 @@ export const UserProfileDialog = ({ open, onOpenChange }: UserProfileDialogProps
                 Convidar Usuário
               </Button>
             )}
-            
+
             <Button variant="destructive" onClick={handleLogout} className="w-full">
               <LogOut className="h-4 w-4 mr-2" />
               Sair

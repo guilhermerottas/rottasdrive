@@ -44,25 +44,25 @@ export function useArquivos(obraId: string, pastaId?: string | null) {
 
       const { data, error } = await query;
       if (error) throw error;
-      
+
       // Buscar os perfis dos uploaders
       const arquivos = data as Arquivo[];
       const uploaderIds = [...new Set(arquivos.filter(a => a.uploaded_by).map(a => a.uploaded_by))];
-      
+
       if (uploaderIds.length > 0) {
         const { data: profiles } = await supabase
           .from("profiles")
           .select("user_id, nome")
           .in("user_id", uploaderIds);
-        
+
         const profileMap = new Map(profiles?.map(p => [p.user_id, { nome: p.nome }]) || []);
-        
+
         return arquivos.map(a => ({
           ...a,
           uploader: a.uploaded_by ? profileMap.get(a.uploaded_by) || null : null
         }));
       }
-      
+
       return arquivos;
     },
     enabled: !!obraId,
@@ -84,6 +84,57 @@ export function useTrashArquivos() {
   });
 }
 
+/**
+ * Creates a database record for an uploaded file.
+ * This should be called AFTER the file has been successfully uploaded to storage via TUS.
+ */
+export function useCreateArquivoRecord() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      obraId,
+      pastaId,
+      nome,
+      arquivoUrl,
+      tipo,
+      tamanho,
+    }: {
+      obraId: string;
+      pastaId?: string | null;
+      nome: string;
+      arquivoUrl: string;
+      tipo: string;
+      tamanho: number;
+    }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      const { data, error } = await supabase
+        .from("arquivos")
+        .insert({
+          obra_id: obraId,
+          pasta_id: pastaId,
+          nome: nome,
+          arquivo_url: arquivoUrl,
+          tipo: tipo,
+          tamanho: tamanho,
+          uploaded_by: user?.id || null,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["arquivos"] });
+      // Also invalidate recent files if there's a query for that
+      queryClient.invalidateQueries({ queryKey: ["arquivos-count"] });
+    },
+  });
+}
+
+// Deprecated: Use useCreateArquivoRecord combined with uploadService for better large file support
 export function useUploadArquivo() {
   const queryClient = useQueryClient();
 
@@ -145,7 +196,7 @@ export function useMoveToTrash() {
       const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase
         .from("arquivos")
-        .update({ 
+        .update({
           deleted_at: new Date().toISOString(),
           deleted_by: user?.id || null
         })
@@ -210,7 +261,7 @@ export function useEmptyTrash() {
         .from("arquivos")
         .select("id, arquivo_url")
         .not("deleted_at", "is", null);
-      
+
       if (fetchError) throw fetchError;
       if (!trashItems || trashItems.length === 0) return;
 
@@ -228,7 +279,7 @@ export function useEmptyTrash() {
         .from("arquivos")
         .delete()
         .not("deleted_at", "is", null);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {

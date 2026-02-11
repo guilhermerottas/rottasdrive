@@ -8,7 +8,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Upload, FileUp } from "lucide-react";
-import { useUploadArquivo } from "@/hooks/useArquivos";
+import { useUpload } from "@/contexts/UploadContext";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 
@@ -20,22 +20,21 @@ interface UploadArquivoDialogProps {
   showTrigger?: boolean;
 }
 
-export function UploadArquivoDialog({ 
-  obraId, 
+export function UploadArquivoDialog({
+  obraId,
   pastaId,
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
-  showTrigger = true 
+  showTrigger = true
 }: UploadArquivoDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setOpen = controlledOnOpenChange || setInternalOpen;
-  
+
   const [files, setFiles] = useState<File[]>([]);
-  const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
+  // Upload status and logic are now handled by UploadContext
+  const { addUploads } = useUpload();
   const inputRef = useRef<HTMLInputElement>(null);
-  const uploadArquivo = useUploadArquivo();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -43,30 +42,15 @@ export function UploadArquivoDialog({
     }
   };
 
-  const handleUpload = async () => {
+  const handleUpload = () => {
     if (files.length === 0) return;
 
-    setUploading(true);
-    setProgress(0);
+    // Adiciona arquivos à fila global
+    addUploads(files, obraId, pastaId);
 
-    try {
-      for (let i = 0; i < files.length; i++) {
-        await uploadArquivo.mutateAsync({
-          file: files[i],
-          obraId,
-          pastaId,
-        });
-        setProgress(((i + 1) / files.length) * 100);
-      }
-      toast.success(`${files.length} arquivo(s) enviado(s) com sucesso!`);
-      setFiles([]);
-      setOpen(false);
-    } catch (error) {
-      toast.error("Erro ao enviar arquivo(s)");
-    } finally {
-      setUploading(false);
-      setProgress(0);
-    }
+    toast.success(`${files.length} arquivo(s) adicionado(s) à fila de upload.`);
+    setFiles([]);
+    setOpen(false);
   };
 
   const formatSize = (bytes: number) => {
@@ -118,14 +102,12 @@ export function UploadArquivoDialog({
             </div>
           )}
 
-          {uploading && <Progress value={progress} />}
-
           <Button
             onClick={handleUpload}
             className="w-full"
-            disabled={files.length === 0 || uploading}
+            disabled={files.length === 0}
           >
-            {uploading ? `Enviando... ${Math.round(progress)}%` : `Enviar ${files.length} arquivo(s)`}
+            Enviar {files.length > 0 ? `${files.length} arquivo(s)` : ''} em segundo plano
           </Button>
         </div>
       </DialogContent>

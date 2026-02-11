@@ -12,10 +12,10 @@ import Grainient from "@/components/Grainient";
 const Auth = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  
+
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-  
+
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [recoveryEmail, setRecoveryEmail] = useState("");
 
@@ -62,12 +62,12 @@ const Auth = () => {
     <div className="min-h-screen relative flex items-center justify-center p-4">
       <div className="absolute inset-0 z-0">
         <Grainient
-          color1="#fcb045"
-          color2="#f94a64"
-          color3="#fcc245"
-          timeSpeed={2.4}
-          colorBalance={0.02}
-          warpStrength={4}
+          color1="#f2930d"
+          color2="#ffd294"
+          color3="#fcb045"
+          timeSpeed={0.25}
+          colorBalance={0}
+          warpStrength={1}
           warpFrequency={5}
           warpSpeed={2}
           warpAmplitude={50}
