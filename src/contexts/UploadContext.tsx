@@ -57,7 +57,10 @@ export function UploadProvider({ children }: { children: ReactNode }) {
         console.log("Starting upload processing for:", upload.file.name);
         updateUploadState(upload.id, { status: "uploading", progress: 0 });
 
-        const fileName = `${upload.obraId}/${upload.pastaId || "root"}/${Date.now()}_${upload.file.name}`;
+        const sanitizedName = upload.file.name
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // remove accents
+            .replace(/[^a-zA-Z0-9._-]/g, "_"); // replace special chars
+        const fileName = `${upload.obraId}/${upload.pastaId || "root"}/${Date.now()}_${sanitizedName}`;
         const bucketName = "arquivos";
 
         try {
