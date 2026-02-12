@@ -26,6 +26,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { useAuthContext } from "@/components/AuthProvider";
 
 interface PastaListItemProps {
   pasta: Pasta;
@@ -53,6 +54,7 @@ export function PastaListItem({ pasta }: PastaListItemProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const deletePasta = useDeletePasta();
+  const { canEdit } = useAuthContext();
   const moveArquivo = useMoveArquivo();
   const updateColor = useUpdatePastaColor();
 
@@ -152,7 +154,7 @@ export function PastaListItem({ pasta }: PastaListItemProps) {
       </Link>
 
       {/* Action Buttons */}
-      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      {canEdit && <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         {/* Color Picker */}
         <Popover open={colorPickerOpen} onOpenChange={setColorPickerOpen}>
           <PopoverTrigger asChild>
@@ -213,7 +215,7 @@ export function PastaListItem({ pasta }: PastaListItemProps) {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
+      </div>}
     </div>
   );
 }
