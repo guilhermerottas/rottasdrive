@@ -20,6 +20,7 @@ export type Database = {
           created_at: string
           deleted_at: string | null
           deleted_by: string | null
+          descricao: string | null
           id: string
           nome: string
           obra_id: string
@@ -34,6 +35,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           deleted_by?: string | null
+          descricao?: string | null
           id?: string
           nome: string
           obra_id: string
@@ -48,6 +50,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           deleted_by?: string | null
+          descricao?: string | null
           id?: string
           nome?: string
           obra_id?: string

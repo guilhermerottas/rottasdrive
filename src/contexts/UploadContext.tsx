@@ -9,16 +9,17 @@ export interface UploadItem {
     file: File;
     obraId: string;
     pastaId?: string | null;
+    descricao?: string | null;
     progress: number;
     status: "pending" | "uploading" | "completed" | "error";
     error?: string;
     createdAt: Date;
-    uploadInstance?: tus.Upload; // To allow cancelling/pausing later if needed
+    uploadInstance?: tus.Upload;
 }
 
 interface UploadContextType {
     uploads: UploadItem[];
-    addUploads: (files: File[], obraId: string, pastaId?: string | null) => void;
+    addUploads: (files: File[], obraId: string, pastaId?: string | null, descricoes?: Record<number, string>) => void;
     removeUpload: (id: string) => void;
     clearCompleted: () => void;
     isOpen: boolean;
@@ -81,6 +82,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
                             arquivoUrl: publicUrl,
                             tipo: upload.file.type,
                             tamanho: upload.file.size,
+                            descricao: upload.descricao,
                         });
 
                         console.log("DB Record created:", upload.file.name);
@@ -143,12 +145,13 @@ export function UploadProvider({ children }: { children: ReactNode }) {
         }
     }, [uploads.length, triggerNext]);
 
-    const addUploads = useCallback((files: File[], obraId: string, pastaId?: string | null) => {
-        const newUploads: UploadItem[] = files.map(file => ({
+    const addUploads = useCallback((files: File[], obraId: string, pastaId?: string | null, descricoes?: Record<number, string>) => {
+        const newUploads: UploadItem[] = files.map((file, index) => ({
             id: Math.random().toString(36).substr(2, 9),
             file,
             obraId,
             pastaId,
+            descricao: descricoes?.[index] || null,
             progress: 0,
             status: "pending",
             createdAt: new Date()

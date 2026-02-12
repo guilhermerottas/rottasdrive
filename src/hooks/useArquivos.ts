@@ -18,6 +18,7 @@ export interface Arquivo {
   deleted_at: string | null;
   deleted_by: string | null;
   uploaded_by: string | null;
+  descricao: string | null;
   uploader?: UploaderProfile | null;
 }
 
@@ -99,6 +100,7 @@ export function useCreateArquivoRecord() {
       arquivoUrl,
       tipo,
       tamanho,
+      descricao,
     }: {
       obraId: string;
       pastaId?: string | null;
@@ -106,6 +108,7 @@ export function useCreateArquivoRecord() {
       arquivoUrl: string;
       tipo: string;
       tamanho: number;
+      descricao?: string | null;
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
 
@@ -119,6 +122,7 @@ export function useCreateArquivoRecord() {
           tipo: tipo,
           tamanho: tamanho,
           uploaded_by: user?.id || null,
+          descricao: descricao || null,
         })
         .select()
         .single();
