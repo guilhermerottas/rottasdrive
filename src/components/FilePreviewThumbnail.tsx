@@ -48,12 +48,7 @@ export function FilePreviewThumbnail({
   if (isPdf(tipo)) {
     return (
       <div className={cn("relative w-full h-full flex items-center justify-center bg-muted", className)}>
-        <iframe
-          src={`${url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-          title={nome}
-          className="w-full h-full pointer-events-none border-0"
-          style={{ minHeight: 200 }}
-        />
+        <FileText className={cn(iconSizes[iconSize], "text-red-500")} />
         <Badge className="absolute top-2 left-2 bg-red-500 hover:bg-red-600 text-white border-0 text-[10px] px-1.5 py-0.5">
           PDF
         </Badge>
