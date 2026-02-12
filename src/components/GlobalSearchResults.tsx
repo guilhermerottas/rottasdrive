@@ -158,6 +158,7 @@ export function GlobalSearchResults({ results, isLoading, searchTerm }: GlobalSe
             deleted_at: null,
             deleted_by: null,
             uploaded_by: null,
+            descricao: null,
           }}
         />
       )}

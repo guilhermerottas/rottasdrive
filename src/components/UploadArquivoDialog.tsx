@@ -10,7 +10,7 @@ import {
 import { Upload, FileUp } from "lucide-react";
 import { useUpload } from "@/contexts/UploadContext";
 import { toast } from "sonner";
-import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
 
 interface UploadArquivoDialogProps {
   obraId: string;
@@ -32,24 +32,29 @@ export function UploadArquivoDialog({
   const setOpen = controlledOnOpenChange || setInternalOpen;
 
   const [files, setFiles] = useState<File[]>([]);
-  // Upload status and logic are now handled by UploadContext
+  const [descricoes, setDescricoes] = useState<Record<number, string>>({});
   const { addUploads } = useUpload();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setFiles(Array.from(e.target.files));
+      setDescricoes({});
     }
+  };
+
+  const handleDescricaoChange = (index: number, value: string) => {
+    setDescricoes(prev => ({ ...prev, [index]: value }));
   };
 
   const handleUpload = () => {
     if (files.length === 0) return;
 
-    // Adiciona arquivos à fila global
-    addUploads(files, obraId, pastaId);
+    addUploads(files, obraId, pastaId, descricoes);
 
     toast.success(`${files.length} arquivo(s) adicionado(s) à fila de upload.`);
     setFiles([]);
+    setDescricoes({});
     setOpen(false);
   };
 
@@ -92,11 +97,19 @@ export function UploadArquivoDialog({
           </div>
 
           {files.length > 0 && (
-            <div className="space-y-2 max-h-40 overflow-y-auto">
+            <div className="space-y-3 max-h-60 overflow-y-auto">
               {files.map((file, i) => (
-                <div key={i} className="flex items-center justify-between text-sm p-2 bg-muted rounded">
-                  <span className="truncate flex-1">{file.name}</span>
-                  <span className="text-muted-foreground ml-2">{formatSize(file.size)}</span>
+                <div key={i} className="p-3 bg-muted rounded space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="truncate flex-1 font-medium">{file.name}</span>
+                    <span className="text-muted-foreground ml-2">{formatSize(file.size)}</span>
+                  </div>
+                  <Textarea
+                    placeholder="Descrição (opcional)"
+                    value={descricoes[i] || ""}
+                    onChange={(e) => handleDescricaoChange(i, e.target.value)}
+                    className="min-h-[60px] text-sm resize-none"
+                  />
                 </div>
               ))}
             </div>

@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Star, ChevronLeft, ChevronRight, User, Calendar, HardDrive, FileType, Building2, Info } from "lucide-react";
+import { Download, Star, ChevronLeft, ChevronRight, User, Calendar, HardDrive, FileType, Building2, Info, FileText } from "lucide-react";
 import { Arquivo } from "@/hooks/useArquivos";
 import { useIsFavorito, useToggleFavorito } from "@/hooks/useFavoritos";
 import { useObra } from "@/hooks/useObras";
@@ -240,6 +240,16 @@ export function FileViewer({ arquivo, open, onOpenChange, arquivos = [], onNavig
                     <p className="text-sm font-medium">{formatFileType(arquivo.tipo)}</p>
                   </div>
                 </div>
+
+                {arquivo.descricao && (
+                  <div className="flex items-start gap-3">
+                    <FileText className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Descrição</p>
+                      <p className="text-sm">{arquivo.descricao}</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

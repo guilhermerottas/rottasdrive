@@ -1,0 +1,1 @@
+ALTER TABLE public.arquivos ADD COLUMN descricao TEXT DEFAULT NULL;
