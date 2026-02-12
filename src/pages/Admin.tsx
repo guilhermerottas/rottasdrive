@@ -119,7 +119,7 @@ const Admin = () => {
           </div>
           <Button onClick={() => setInviteOpen(true)} className="gap-2">
             <UserPlus className="h-4 w-4" />
-            Convidar Usuário
+            convidar
           </Button>
         </div>
 
