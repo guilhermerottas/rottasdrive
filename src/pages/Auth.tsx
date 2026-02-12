@@ -122,37 +122,38 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email: inviteEmail.trim().toLowerCase(),
-        password: invitePassword,
-        options: {
-          emailRedirectTo: window.location.origin,
-          data: { nome: inviteEmail.split("@")[0] },
+      // Use edge function to create user with auto-confirmation
+      const { data: fnData, error: fnError } = await supabase.functions.invoke("invite-signup", {
+        body: {
+          email: inviteEmail.trim().toLowerCase(),
+          password: invitePassword,
+          token: inviteToken!,
         },
       });
 
-      if (error) {
-        toast.error("Erro ao criar conta: " + error.message);
+      if (fnError || fnData?.error) {
+        toast.error("Erro ao criar conta: " + (fnData?.error || fnError?.message));
         setLoading(false);
         return;
       }
 
-      // Update invite status
-      await supabase
-        .from("invites")
-        .update({ status: "accepted" })
-        .eq("token", inviteToken!);
+      // Sign in immediately since the user is auto-confirmed
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: inviteEmail.trim().toLowerCase(),
+        password: invitePassword,
+      });
 
-      // If user is auto-confirmed, sign in directly
-      if (data.session) {
+      if (signInError) {
+        toast.error("Conta criada, mas erro ao fazer login: " + signInError.message);
+        setLoading(false);
         setInviteStep("done");
-        toast.success("Conta criada com sucesso!");
-        setTimeout(() => navigate("/"), 1500);
-      } else {
-        // User needs email confirmation
-        setInviteStep("done");
-        toast.success("Conta criada! Verifique seu email para confirmar.");
+        setTimeout(() => navigate("/auth"), 2000);
+        return;
       }
+
+      setInviteStep("done");
+      toast.success("Conta criada com sucesso!");
+      setTimeout(() => navigate("/"), 1500);
     } catch {
       toast.error("Erro ao criar conta.");
     }
