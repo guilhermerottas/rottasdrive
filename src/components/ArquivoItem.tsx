@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoveArquivoDialog } from "./MoveArquivoDialog";
 import { RenameArquivoDialog } from "./RenameArquivoDialog";
+import { FilePreviewThumbnail } from "./FilePreviewThumbnail";
 import { cn } from "@/lib/utils";
 import { useAuthContext } from "@/components/AuthProvider";
 
@@ -175,15 +176,20 @@ export function ArquivoItem({ arquivo, obraId, viewMode, onView, isSelected = fa
             onClick={onView}
           >
             {isImage ? (
-              <img
-                src={arquivo.arquivo_url}
-                alt={arquivo.nome}
-                className="w-full h-auto object-cover hover:scale-105 transition-transform duration-300"
-                loading="lazy"
+              <FilePreviewThumbnail
+                tipo={arquivo.tipo}
+                url={arquivo.arquivo_url}
+                nome={arquivo.nome}
+                className="hover:scale-105 transition-transform duration-300"
               />
             ) : (
-              <div className="aspect-[4/3] flex items-center justify-center bg-muted">
-                <Icon className="h-16 w-16 text-muted-foreground" />
+              <div className="aspect-[4/3] w-full">
+                <FilePreviewThumbnail
+                  tipo={arquivo.tipo}
+                  url={arquivo.arquivo_url}
+                  nome={arquivo.nome}
+                  iconSize="lg"
+                />
               </div>
             )}
             
@@ -448,16 +454,13 @@ export function ArquivoItem({ arquivo, obraId, viewMode, onView, isSelected = fa
           </div>
 
           {/* Icon/Preview */}
-          <div className="mb-3 pointer-events-none">
-            {isImage ? (
-              <img
-                src={arquivo.arquivo_url}
-                alt={arquivo.nome}
-                className="h-20 w-20 object-cover rounded"
-              />
-            ) : (
-              <Icon className="h-16 w-16 text-muted-foreground" />
-            )}
+          <div className="mb-3 pointer-events-none h-20 w-20 rounded overflow-hidden">
+            <FilePreviewThumbnail
+              tipo={arquivo.tipo}
+              url={arquivo.arquivo_url}
+              nome={arquivo.nome}
+              iconSize="lg"
+            />
           </div>
 
           {/* Info */}
@@ -510,16 +513,13 @@ export function ArquivoItem({ arquivo, obraId, viewMode, onView, isSelected = fa
         className="group flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
         onClick={onView}
       >
-        <div className="flex-shrink-0">
-          {isImage ? (
-            <img
-              src={arquivo.arquivo_url}
-              alt={arquivo.nome}
-              className="h-10 w-10 object-cover rounded"
-            />
-          ) : (
-            <Icon className="h-8 w-8 text-muted-foreground" />
-          )}
+        <div className="flex-shrink-0 h-10 w-10 rounded overflow-hidden">
+          <FilePreviewThumbnail
+            tipo={arquivo.tipo}
+            url={arquivo.arquivo_url}
+            nome={arquivo.nome}
+            iconSize="sm"
+          />
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-medium truncate">{arquivo.nome}</p>
