@@ -55,6 +55,7 @@ import { RenameArquivoDialog } from "./RenameArquivoDialog";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useAuthContext } from "@/components/AuthProvider";
 
 interface ArquivosTableViewProps {
   arquivos: Arquivo[];
@@ -129,6 +130,7 @@ function ArquivoTableRow({ arquivo, obraId, onView, isSelected, onToggleSelectio
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const moveToTrash = useMoveToTrash();
+  const { canEdit } = useAuthContext();
   const { data: isFavorito } = useIsFavorito(arquivo.id);
   const toggleFavorito = useToggleFavorito();
   const Icon = getFileIcon(arquivo.tipo);
@@ -277,23 +279,27 @@ function ArquivoTableRow({ arquivo, obraId, onView, isSelected, onToggleSelectio
                   <Download className="mr-2 h-4 w-4" />
                   Download
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setRenameDialogOpen(true)}>
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Renomear
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setMoveDialogOpen(true)}>
-                  <FolderInput className="mr-2 h-4 w-4" />
-                  Mover
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => setDeleteDialogOpen(true)}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Excluir
-                </DropdownMenuItem>
+                {canEdit && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setRenameDialogOpen(true)}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Renomear
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setMoveDialogOpen(true)}>
+                      <FolderInput className="mr-2 h-4 w-4" />
+                      Mover
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => setDeleteDialogOpen(true)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Excluir
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

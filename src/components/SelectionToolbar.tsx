@@ -14,6 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useAuthContext } from "@/components/AuthProvider";
 
 interface SelectionToolbarProps {
   selectedIds: Set<string>;
@@ -33,6 +34,7 @@ export function SelectionToolbar({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const moveToTrash = useMoveToTrash();
+  const { canEdit } = useAuthContext();
 
   const selectedArquivos = arquivos.filter(a => selectedIds.has(a.id));
 
@@ -115,15 +117,17 @@ export function SelectionToolbar({
             {isDownloading ? "Baixando..." : "Baixar"}
           </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setDeleteDialogOpen(true)}
-            className="text-destructive hover:text-destructive"
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Excluir
-          </Button>
+          {canEdit && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setDeleteDialogOpen(true)}
+              className="text-destructive hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir
+            </Button>
+          )}
         </div>
 
         <div className="h-6 w-px bg-border" />

@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import Folder from "@/components/Folder";
+import { useAuthContext } from "@/components/AuthProvider";
 
 interface PastaItemProps {
   pasta: Pasta;
@@ -53,6 +54,7 @@ export function PastaItem({ pasta }: PastaItemProps) {
   const [isPressed, setIsPressed] = useState(false);
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const deletePasta = useDeletePasta();
+  const { canEdit } = useAuthContext();
   const moveArquivo = useMoveArquivo();
   const updateColor = useUpdatePastaColor();
 
@@ -122,7 +124,7 @@ export function PastaItem({ pasta }: PastaItemProps) {
       onMouseLeave={() => setIsPressed(false)}
     >
       {/* Action Buttons */}
-      <div className="absolute -top-2 -right-2 z-20 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      {canEdit && <div className="absolute -top-2 -right-2 z-20 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         {/* Color Picker */}
         <Popover open={colorPickerOpen} onOpenChange={setColorPickerOpen}>
           <PopoverTrigger asChild>
@@ -183,7 +185,7 @@ export function PastaItem({ pasta }: PastaItemProps) {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
+      </div>}
 
       <Link
         to={`/obra/${pasta.obra_id}/pasta/${pasta.id}`}

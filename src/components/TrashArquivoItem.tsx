@@ -20,6 +20,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useAuthContext } from "@/components/AuthProvider";
 
 interface TrashArquivoItemProps {
   arquivo: ArquivoWithObra;
@@ -68,6 +69,7 @@ export function TrashArquivoItem({ arquivo, onRestore, onDeletePermanently }: Tr
   const Icon = getFileIcon(arquivo.tipo);
   const isImage = arquivo.tipo?.startsWith("image/");
   const daysRemaining = getDaysRemaining(arquivo.deleted_at);
+  const { canEdit } = useAuthContext();
 
   return (
     <div className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
@@ -118,6 +120,7 @@ export function TrashArquivoItem({ arquivo, onRestore, onDeletePermanently }: Tr
           size="sm"
           onClick={onRestore}
           className="gap-2"
+          disabled={!canEdit}
         >
           <RotateCcw className="h-4 w-4" />
           <span className="hidden sm:inline">Restaurar</span>
@@ -125,7 +128,7 @@ export function TrashArquivoItem({ arquivo, onRestore, onDeletePermanently }: Tr
 
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="destructive" size="sm" className="gap-2">
+            <Button variant="destructive" size="sm" className="gap-2" disabled={!canEdit}>
               <Trash2 className="h-4 w-4" />
               <span className="hidden sm:inline">Excluir</span>
             </Button>

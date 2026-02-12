@@ -16,12 +16,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useAuthContext } from "@/components/AuthProvider";
 
 export default function Lixeira() {
   const { data: trashArquivos, isLoading } = useTrashArquivos();
   const restoreArquivo = useRestoreArquivo();
   const deletePermanently = useDeletePermanently();
   const emptyTrash = useEmptyTrash();
+  const { canEdit } = useAuthContext();
 
   const handleRestore = async (id: string) => {
     try {
@@ -64,7 +66,7 @@ export default function Lixeira() {
             </div>
           </div>
 
-          {trashArquivos && trashArquivos.length > 0 && (
+          {canEdit && trashArquivos && trashArquivos.length > 0 && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" size="sm">

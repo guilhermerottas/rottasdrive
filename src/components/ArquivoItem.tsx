@@ -44,6 +44,7 @@ import {
 import { MoveArquivoDialog } from "./MoveArquivoDialog";
 import { RenameArquivoDialog } from "./RenameArquivoDialog";
 import { cn } from "@/lib/utils";
+import { useAuthContext } from "@/components/AuthProvider";
 
 interface ArquivoItemProps {
   arquivo: Arquivo;
@@ -74,6 +75,7 @@ export function ArquivoItem({ arquivo, obraId, viewMode, onView, isSelected = fa
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const moveToTrash = useMoveToTrash();
+  const { canEdit } = useAuthContext();
   const { data: isFavorito } = useIsFavorito(arquivo.id);
   const toggleFavorito = useToggleFavorito();
   const Icon = getFileIcon(arquivo.tipo);
@@ -267,23 +269,27 @@ export function ArquivoItem({ arquivo, obraId, viewMode, onView, isSelected = fa
                   <Download className="mr-2 h-4 w-4" />
                   Download
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setRenameDialogOpen(true)}>
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Renomear
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setMoveDialogOpen(true)}>
-                  <FolderInput className="mr-2 h-4 w-4" />
-                  Mover
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => setDeleteDialogOpen(true)}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Excluir
-                </DropdownMenuItem>
+                {canEdit && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setRenameDialogOpen(true)}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Renomear
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setMoveDialogOpen(true)}>
+                      <FolderInput className="mr-2 h-4 w-4" />
+                      Mover
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => setDeleteDialogOpen(true)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Excluir
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -416,23 +422,27 @@ export function ArquivoItem({ arquivo, obraId, viewMode, onView, isSelected = fa
                   <Download className="mr-2 h-4 w-4" />
                   Download
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setRenameDialogOpen(true)}>
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Renomear
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setMoveDialogOpen(true)}>
-                  <FolderInput className="mr-2 h-4 w-4" />
-                  Mover
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => setDeleteDialogOpen(true)}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Excluir
-                </DropdownMenuItem>
+                {canEdit && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setRenameDialogOpen(true)}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Renomear
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setMoveDialogOpen(true)}>
+                      <FolderInput className="mr-2 h-4 w-4" />
+                      Mover
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => setDeleteDialogOpen(true)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Excluir
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -532,14 +542,18 @@ export function ArquivoItem({ arquivo, obraId, viewMode, onView, isSelected = fa
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setRenameDialogOpen(true)}>
-                <Pencil className="mr-2 h-4 w-4" />
-                Renomear
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setMoveDialogOpen(true)}>
-                <FolderInput className="mr-2 h-4 w-4" />
-                Mover para...
-              </DropdownMenuItem>
+              {canEdit && (
+                <>
+                  <DropdownMenuItem onClick={() => setRenameDialogOpen(true)}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Renomear
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setMoveDialogOpen(true)}>
+                    <FolderInput className="mr-2 h-4 w-4" />
+                    Mover para...
+                  </DropdownMenuItem>
+                </>
+              )}
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>
                   <Share2 className="mr-2 h-4 w-4" />
@@ -560,14 +574,18 @@ export function ArquivoItem({ arquivo, obraId, viewMode, onView, isSelected = fa
                   </DropdownMenuItem>
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => setDeleteDialogOpen(true)}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Excluir
-              </DropdownMenuItem>
+              {canEdit && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => setDeleteDialogOpen(true)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Excluir
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
