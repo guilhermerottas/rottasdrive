@@ -87,7 +87,7 @@ export function SelectionToolbar({
 
   return (
     <>
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-background border rounded-xl shadow-lg px-4 py-3 flex items-center gap-4 animate-in slide-in-from-bottom-4">
+      <div className="fixed bottom-20 sm:bottom-6 left-2 right-2 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-auto z-50 bg-background border rounded-xl shadow-lg px-3 sm:px-4 py-3 flex items-center justify-between sm:justify-start gap-2 sm:gap-4 animate-in slide-in-from-bottom-4">
         <div className="flex items-center gap-2">
           <Checkbox
             checked={allSelected}
@@ -99,22 +99,23 @@ export function SelectionToolbar({
               }
             }}
           />
-          <span className="text-sm font-medium">
+          <span className="text-xs sm:text-sm font-medium whitespace-nowrap">
             {selectedIds.size} selecionado(s)
           </span>
         </div>
 
-        <div className="h-6 w-px bg-border" />
+        <div className="h-6 w-px bg-border hidden sm:block" />
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={handleDownloadSelected}
             disabled={isDownloading}
+            className="h-8 px-2 sm:px-3"
           >
-            <Download className="h-4 w-4 mr-2" />
-            {isDownloading ? "Baixando..." : "Baixar"}
+            <Download className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">{isDownloading ? "Baixando..." : "Baixar"}</span>
           </Button>
 
           {canEdit && (
@@ -122,21 +123,19 @@ export function SelectionToolbar({
               variant="outline"
               size="sm"
               onClick={() => setDeleteDialogOpen(true)}
-              className="text-destructive hover:text-destructive"
+              className="text-destructive hover:text-destructive h-8 px-2 sm:px-3"
             >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Excluir
+              <Trash2 className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Excluir</span>
             </Button>
           )}
         </div>
-
-        <div className="h-6 w-px bg-border" />
 
         <Button
           variant="ghost"
           size="icon"
           onClick={onClearSelection}
-          className="h-8 w-8"
+          className="h-8 w-8 flex-shrink-0"
         >
           <X className="h-4 w-4" />
         </Button>
