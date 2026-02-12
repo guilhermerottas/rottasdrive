@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,16 +8,30 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
 import Grainient from "@/components/Grainient";
+import { CheckCircle, Loader2 } from "lucide-react";
 
 const Auth = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const inviteToken = searchParams.get("invite");
+
   const [loading, setLoading] = useState(false);
 
+  // Login state
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
 
+  // Forgot password state
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [recoveryEmail, setRecoveryEmail] = useState("");
+
+  // Invite registration state
+  const [inviteStep, setInviteStep] = useState<"validate" | "register" | "done">("validate");
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [invitePassword, setInvitePassword] = useState("");
+  const [invitePasswordConfirm, setInvitePasswordConfirm] = useState("");
+  const [inviteValid, setInviteValid] = useState(false);
+  const [validatingInvite, setValidatingInvite] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,6 +72,240 @@ const Auth = () => {
     setLoading(false);
   };
 
+  const handleValidateInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setValidatingInvite(true);
+
+    try {
+      const { data: invite, error } = await supabase
+        .from("invites")
+        .select("*")
+        .eq("token", inviteToken!)
+        .eq("email", inviteEmail.trim().toLowerCase())
+        .eq("status", "pending")
+        .single();
+
+      if (error || !invite) {
+        toast.error("Convite inválido ou email não corresponde ao convite.");
+        setValidatingInvite(false);
+        return;
+      }
+
+      // Check if expired
+      if (new Date(invite.expires_at) < new Date()) {
+        toast.error("Este convite expirou. Solicite um novo convite ao administrador.");
+        setValidatingInvite(false);
+        return;
+      }
+
+      setInviteValid(true);
+      setInviteStep("register");
+    } catch {
+      toast.error("Erro ao validar convite.");
+    }
+    setValidatingInvite(false);
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (invitePassword.length < 6) {
+      toast.error("A senha deve ter pelo menos 6 caracteres.");
+      return;
+    }
+
+    if (invitePassword !== invitePasswordConfirm) {
+      toast.error("As senhas não coincidem.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: inviteEmail.trim().toLowerCase(),
+        password: invitePassword,
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: { nome: inviteEmail.split("@")[0] },
+        },
+      });
+
+      if (error) {
+        toast.error("Erro ao criar conta: " + error.message);
+        setLoading(false);
+        return;
+      }
+
+      // Update invite status
+      await supabase
+        .from("invites")
+        .update({ status: "accepted" })
+        .eq("token", inviteToken!);
+
+      // If user is auto-confirmed, sign in directly
+      if (data.session) {
+        setInviteStep("done");
+        toast.success("Conta criada com sucesso!");
+        setTimeout(() => navigate("/"), 1500);
+      } else {
+        // User needs email confirmation
+        setInviteStep("done");
+        toast.success("Conta criada! Verifique seu email para confirmar.");
+      }
+    } catch {
+      toast.error("Erro ao criar conta.");
+    }
+    setLoading(false);
+  };
+
+  // Render invite flow
+  if (inviteToken) {
+    return (
+      <div className="min-h-screen relative flex items-center justify-center p-4">
+        <div className="absolute inset-0 z-0">
+          <Grainient
+            color1="#f2930d"
+            color2="#ffd294"
+            color3="#fcb045"
+            timeSpeed={0.25}
+            colorBalance={0}
+            warpStrength={1}
+            warpFrequency={5}
+            warpSpeed={2}
+            warpAmplitude={50}
+            blendAngle={0}
+            blendSoftness={0.05}
+            rotationAmount={500}
+            noiseScale={2}
+            grainAmount={0.1}
+            grainScale={2}
+            grainAnimated={false}
+            contrast={1.5}
+            gamma={1}
+            saturation={1}
+            centerX={0}
+            centerY={0}
+            zoom={0.9}
+          />
+        </div>
+        <Card className="w-full max-w-md relative z-10 shadow-2xl backdrop-blur-sm bg-card/95">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <img src={logo} alt="Logo" style={{ width: 60, height: 60 }} />
+            </div>
+            <CardTitle className="text-2xl">
+              {inviteStep === "done" ? "Conta Criada!" : "Criar Conta"}
+            </CardTitle>
+            <CardDescription>
+              {inviteStep === "validate" && "Insira seu email para validar o convite"}
+              {inviteStep === "register" && "Defina sua senha para finalizar o cadastro"}
+              {inviteStep === "done" && "Você será redirecionado em instantes..."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {inviteStep === "done" ? (
+              <div className="flex flex-col items-center gap-4 py-4">
+                <CheckCircle className="h-12 w-12 text-green-500" />
+                <p className="text-sm text-muted-foreground text-center">
+                  Sua conta foi criada com sucesso. Redirecionando...
+                </p>
+              </div>
+            ) : inviteStep === "validate" ? (
+              <form onSubmit={handleValidateInvite} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="invite-email">Seu Email</Label>
+                  <Input
+                    id="invite-email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Use o mesmo email para o qual o convite foi enviado.
+                  </p>
+                </div>
+                <Button type="submit" className="w-full" disabled={validatingInvite}>
+                  {validatingInvite ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Validando...
+                    </>
+                  ) : (
+                    "Validar Convite"
+                  )}
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => navigate("/auth")}
+                  className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  ← Já tenho conta, fazer login
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleRegister} className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input
+                    type="email"
+                    value={inviteEmail}
+                    disabled
+                    className="opacity-70"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="invite-password">Senha</Label>
+                  <Input
+                    id="invite-password"
+                    type="password"
+                    placeholder="Mínimo 6 caracteres"
+                    value={invitePassword}
+                    onChange={(e) => setInvitePassword(e.target.value)}
+                    required
+                    minLength={6}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="invite-password-confirm">Confirmar Senha</Label>
+                  <Input
+                    id="invite-password-confirm"
+                    type="password"
+                    placeholder="Repita a senha"
+                    value={invitePasswordConfirm}
+                    onChange={(e) => setInvitePasswordConfirm(e.target.value)}
+                    required
+                    minLength={6}
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Criando conta...
+                    </>
+                  ) : (
+                    "Criar Conta"
+                  )}
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => setInviteStep("validate")}
+                  className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  ← Voltar
+                </button>
+              </form>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Render normal login
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4">
       <div className="absolute inset-0 z-0">
