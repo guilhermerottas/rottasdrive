@@ -1,6 +1,8 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useTrashArquivos, useRestoreArquivo, useDeletePermanently, useEmptyTrash } from "@/hooks/useArquivos";
+import { useTrashPastas, useRestorePasta, useDeletePastaPermanently } from "@/hooks/usePastas";
 import { TrashArquivoItem } from "@/components/TrashArquivoItem";
+import { TrashPastaItem } from "@/components/TrashPastaItem";
 import { TrashItemSkeleton } from "@/components/skeletons/TrashItemSkeleton";
 import { Button } from "@/components/ui/button";
 import { Trash2, AlertTriangle } from "lucide-react";
@@ -19,11 +21,17 @@ import {
 import { useAuthContext } from "@/components/AuthProvider";
 
 export default function Lixeira() {
-  const { data: trashArquivos, isLoading } = useTrashArquivos();
+  const { data: trashArquivos, isLoading: loadingArquivos } = useTrashArquivos();
+  const { data: trashPastas, isLoading: loadingPastas } = useTrashPastas();
   const restoreArquivo = useRestoreArquivo();
   const deletePermanently = useDeletePermanently();
   const emptyTrash = useEmptyTrash();
+  const restorePasta = useRestorePasta();
+  const deletePastaPermanently = useDeletePastaPermanently();
   const { canEdit } = useAuthContext();
+
+  const isLoading = loadingArquivos || loadingPastas;
+  const totalItems = (trashArquivos?.length || 0) + (trashPastas?.length || 0);
 
   const handleRestore = async (id: string) => {
     try {
@@ -43,8 +51,32 @@ export default function Lixeira() {
     }
   };
 
+  const handleRestorePasta = async (id: string) => {
+    try {
+      await restorePasta.mutateAsync(id);
+      toast.success("Pasta restaurada com todos os arquivos!");
+    } catch (error) {
+      toast.error("Erro ao restaurar pasta");
+    }
+  };
+
+  const handleDeletePastaPermanently = async (id: string) => {
+    try {
+      await deletePastaPermanently.mutateAsync(id);
+      toast.success("Pasta excluída permanentemente!");
+    } catch (error) {
+      toast.error("Erro ao excluir pasta");
+    }
+  };
+
   const handleEmptyTrash = async () => {
     try {
+      // Delete all pastas permanently
+      if (trashPastas) {
+        for (const pasta of trashPastas) {
+          await deletePastaPermanently.mutateAsync(pasta.id);
+        }
+      }
       await emptyTrash.mutateAsync();
       toast.success("Lixeira esvaziada com sucesso!");
     } catch (error) {
@@ -61,12 +93,12 @@ export default function Lixeira() {
             <div>
               <h1 className="text-2xl font-bold">Lixeira</h1>
               <p className="text-muted-foreground text-sm">
-                Arquivos excluídos são removidos permanentemente após 30 dias
+                Itens excluídos são removidos permanentemente após 30 dias
               </p>
             </div>
           </div>
 
-          {canEdit && trashArquivos && trashArquivos.length > 0 && (
+          {canEdit && totalItems > 0 && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" size="sm">
@@ -81,7 +113,7 @@ export default function Lixeira() {
                     Esvaziar Lixeira?
                   </AlertDialogTitle>
                   <AlertDialogDescription>
-                    Esta ação irá excluir permanentemente todos os {trashArquivos.length} arquivo(s) da lixeira. 
+                    Esta ação irá excluir permanentemente todos os {totalItems} item(ns) da lixeira. 
                     Esta ação não pode ser desfeita.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
@@ -105,17 +137,25 @@ export default function Lixeira() {
               <TrashItemSkeleton key={i} />
             ))}
           </div>
-        ) : !trashArquivos || trashArquivos.length === 0 ? (
+        ) : totalItems === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <Trash2 className="h-16 w-16 text-muted-foreground/50 mb-4" />
             <h3 className="text-lg font-medium text-muted-foreground">A lixeira está vazia</h3>
             <p className="text-sm text-muted-foreground/70 mt-1">
-              Arquivos excluídos aparecerão aqui
+              Arquivos e pastas excluídos aparecerão aqui
             </p>
           </div>
         ) : (
           <div className="space-y-2">
-            {trashArquivos.map((arquivo) => (
+            {trashPastas?.map((pasta) => (
+              <TrashPastaItem
+                key={pasta.id}
+                pasta={pasta}
+                onRestore={() => handleRestorePasta(pasta.id)}
+                onDeletePermanently={() => handleDeletePastaPermanently(pasta.id)}
+              />
+            ))}
+            {trashArquivos?.map((arquivo) => (
               <TrashArquivoItem
                 key={arquivo.id}
                 arquivo={arquivo}
