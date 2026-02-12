@@ -68,6 +68,15 @@ serve(async (req: Request) => {
       );
     }
 
+    // Assign viewer role to new user
+    const { error: roleError } = await supabaseAdmin
+      .from("user_roles")
+      .insert({ user_id: userData.user!.id, role: "viewer" });
+
+    if (roleError) {
+      console.error("Error assigning viewer role:", roleError);
+    }
+
     // Mark invite as accepted
     await supabaseAdmin
       .from("invites")
