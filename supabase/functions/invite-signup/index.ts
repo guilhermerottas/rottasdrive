@@ -13,11 +13,11 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { email, password, token } = await req.json();
+    const { email, password, token, nome } = await req.json();
 
-    if (!email || !password || !token) {
+    if (!email || !password || !token || !nome) {
       return new Response(
-        JSON.stringify({ error: "Missing email, password, or token" }),
+        JSON.stringify({ error: "Missing email, password, token, or nome" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
@@ -57,7 +57,7 @@ serve(async (req: Request) => {
       email: email.trim().toLowerCase(),
       password,
       email_confirm: true,
-      user_metadata: { nome: email.split("@")[0] },
+      user_metadata: { nome: nome.trim() },
     });
 
     if (createError) {

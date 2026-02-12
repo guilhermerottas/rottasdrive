@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,37 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
 import Grainient from "@/components/Grainient";
-import { CheckCircle, Loader2 } from "lucide-react";
+import { CheckCircle, Loader2, Camera, User } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+const GrainientBackground = () => (
+  <div className="absolute inset-0 z-0">
+    <Grainient
+      color1="#f2930d"
+      color2="#ffd294"
+      color3="#fcb045"
+      timeSpeed={0.25}
+      colorBalance={0}
+      warpStrength={1}
+      warpFrequency={5}
+      warpSpeed={2}
+      warpAmplitude={50}
+      blendAngle={0}
+      blendSoftness={0.05}
+      rotationAmount={500}
+      noiseScale={2}
+      grainAmount={0.1}
+      grainScale={2}
+      grainAnimated={false}
+      contrast={1.5}
+      gamma={1}
+      saturation={1}
+      centerX={0}
+      centerY={0}
+      zoom={0.9}
+    />
+  </div>
+);
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -26,11 +56,14 @@ const Auth = () => {
   const [recoveryEmail, setRecoveryEmail] = useState("");
 
   // Invite registration state
-  const [inviteStep, setInviteStep] = useState<"validate" | "register" | "done">("validate");
+  const [inviteStep, setInviteStep] = useState<"validate" | "register" | "profile" | "done">("validate");
   const [inviteEmail, setInviteEmail] = useState("");
   const [invitePassword, setInvitePassword] = useState("");
   const [invitePasswordConfirm, setInvitePasswordConfirm] = useState("");
-  const [inviteValid, setInviteValid] = useState(false);
+  const [inviteName, setInviteName] = useState("");
+  const [inviteAvatarFile, setInviteAvatarFile] = useState<File | null>(null);
+  const [inviteAvatarPreview, setInviteAvatarPreview] = useState<string | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
   const [validatingInvite, setValidatingInvite] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -57,9 +90,7 @@ const Auth = () => {
 
     const { error } = await supabase.auth.resetPasswordForEmail(
       recoveryEmail,
-      {
-        redirectTo: `${window.location.origin}/auth`,
-      }
+      { redirectTo: `${window.location.origin}/auth` }
     );
 
     if (error) {
@@ -91,14 +122,12 @@ const Auth = () => {
         return;
       }
 
-      // Check if expired
       if (new Date(invite.expires_at) < new Date()) {
         toast.error("Este convite expirou. Solicite um novo convite ao administrador.");
         setValidatingInvite(false);
         return;
       }
 
-      setInviteValid(true);
       setInviteStep("register");
     } catch {
       toast.error("Erro ao validar convite.");
@@ -119,15 +148,42 @@ const Auth = () => {
       return;
     }
 
+    // Move to profile step
+    setInviteStep("profile");
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("A imagem deve ter no máximo 5MB.");
+        return;
+      }
+      setInviteAvatarFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setInviteAvatarPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleFinishProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!inviteName.trim()) {
+      toast.error("O nome é obrigatório.");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // Use edge function to create user with auto-confirmation
+      // Create user via edge function
       const { data: fnData, error: fnError } = await supabase.functions.invoke("invite-signup", {
         body: {
           email: inviteEmail.trim().toLowerCase(),
           password: invitePassword,
           token: inviteToken!,
+          nome: inviteName.trim(),
         },
       });
 
@@ -137,8 +193,8 @@ const Auth = () => {
         return;
       }
 
-      // Sign in immediately since the user is auto-confirmed
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      // Sign in immediately
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email: inviteEmail.trim().toLowerCase(),
         password: invitePassword,
       });
@@ -149,6 +205,27 @@ const Auth = () => {
         setInviteStep("done");
         setTimeout(() => navigate("/auth"), 2000);
         return;
+      }
+
+      // Upload avatar if provided
+      if (inviteAvatarFile && signInData.user) {
+        const fileExt = inviteAvatarFile.name.split(".").pop();
+        const fileName = `${signInData.user.id}/avatar.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("avatars")
+          .upload(fileName, inviteAvatarFile, { upsert: true });
+
+        if (!uploadError) {
+          const { data: publicUrl } = supabase.storage
+            .from("avatars")
+            .getPublicUrl(fileName);
+
+          await supabase
+            .from("profiles")
+            .update({ avatar_url: `${publicUrl.publicUrl}?t=${Date.now()}` })
+            .eq("user_id", signInData.user.id);
+        }
       }
 
       setInviteStep("done");
@@ -164,43 +241,19 @@ const Auth = () => {
   if (inviteToken) {
     return (
       <div className="min-h-screen relative flex items-center justify-center p-4">
-        <div className="absolute inset-0 z-0">
-          <Grainient
-            color1="#f2930d"
-            color2="#ffd294"
-            color3="#fcb045"
-            timeSpeed={0.25}
-            colorBalance={0}
-            warpStrength={1}
-            warpFrequency={5}
-            warpSpeed={2}
-            warpAmplitude={50}
-            blendAngle={0}
-            blendSoftness={0.05}
-            rotationAmount={500}
-            noiseScale={2}
-            grainAmount={0.1}
-            grainScale={2}
-            grainAnimated={false}
-            contrast={1.5}
-            gamma={1}
-            saturation={1}
-            centerX={0}
-            centerY={0}
-            zoom={0.9}
-          />
-        </div>
+        <GrainientBackground />
         <Card className="w-full max-w-md relative z-10 shadow-2xl backdrop-blur-sm bg-card/95">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
               <img src={logo} alt="Logo" style={{ width: 60, height: 60 }} />
             </div>
             <CardTitle className="text-2xl">
-              {inviteStep === "done" ? "Conta Criada!" : "Criar Conta"}
+              {inviteStep === "done" ? "Conta Criada!" : inviteStep === "profile" ? "Configure seu Perfil" : "Criar Conta"}
             </CardTitle>
             <CardDescription>
               {inviteStep === "validate" && "Insira seu email para validar o convite"}
-              {inviteStep === "register" && "Defina sua senha para finalizar o cadastro"}
+              {inviteStep === "register" && "Defina sua senha para continuar"}
+              {inviteStep === "profile" && "Informe seu nome e foto de perfil"}
               {inviteStep === "done" && "Você será redirecionado em instantes..."}
             </CardDescription>
           </CardHeader>
@@ -246,16 +299,11 @@ const Auth = () => {
                   ← Já tenho conta, fazer login
                 </button>
               </form>
-            ) : (
+            ) : inviteStep === "register" ? (
               <form onSubmit={handleRegister} className="space-y-4">
                 <div className="space-y-2">
                   <Label>Email</Label>
-                  <Input
-                    type="email"
-                    value={inviteEmail}
-                    disabled
-                    className="opacity-70"
-                  />
+                  <Input type="email" value={inviteEmail} disabled className="opacity-70" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="invite-password">Senha</Label>
@@ -281,15 +329,8 @@ const Auth = () => {
                     minLength={6}
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Criando conta...
-                    </>
-                  ) : (
-                    "Criar Conta"
-                  )}
+                <Button type="submit" className="w-full">
+                  Continuar
                 </Button>
                 <button
                   type="button"
@@ -299,7 +340,72 @@ const Auth = () => {
                   ← Voltar
                 </button>
               </form>
-            )}
+            ) : inviteStep === "profile" ? (
+              <form onSubmit={handleFinishProfile} className="space-y-6">
+                {/* Avatar upload */}
+                <div className="flex flex-col items-center gap-3">
+                  <div
+                    className="relative cursor-pointer group"
+                    onClick={() => avatarInputRef.current?.click()}
+                  >
+                    <Avatar className="h-24 w-24 border-2 border-dashed border-muted-foreground/30 group-hover:border-primary transition-colors">
+                      {inviteAvatarPreview ? (
+                        <AvatarImage src={inviteAvatarPreview} alt="Preview" />
+                      ) : (
+                        <AvatarFallback className="bg-muted">
+                          <User className="h-10 w-10 text-muted-foreground" />
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    <div className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-1.5 shadow-md">
+                      <Camera className="h-3.5 w-3.5" />
+                    </div>
+                  </div>
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarChange}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Foto de perfil (opcional)
+                  </p>
+                </div>
+
+                {/* Name input */}
+                <div className="space-y-2">
+                  <Label htmlFor="invite-name">Nome *</Label>
+                  <Input
+                    id="invite-name"
+                    type="text"
+                    placeholder="Seu nome completo"
+                    value={inviteName}
+                    onChange={(e) => setInviteName(e.target.value)}
+                    required
+                    maxLength={100}
+                  />
+                </div>
+
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Criando conta...
+                    </>
+                  ) : (
+                    "Finalizar Cadastro"
+                  )}
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => setInviteStep("register")}
+                  className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  ← Voltar
+                </button>
+              </form>
+            ) : null}
           </CardContent>
         </Card>
       </div>
@@ -309,32 +415,7 @@ const Auth = () => {
   // Render normal login
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4">
-      <div className="absolute inset-0 z-0">
-        <Grainient
-          color1="#f2930d"
-          color2="#ffd294"
-          color3="#fcb045"
-          timeSpeed={0.25}
-          colorBalance={0}
-          warpStrength={1}
-          warpFrequency={5}
-          warpSpeed={2}
-          warpAmplitude={50}
-          blendAngle={0}
-          blendSoftness={0.05}
-          rotationAmount={500}
-          noiseScale={2}
-          grainAmount={0.1}
-          grainScale={2}
-          grainAnimated={false}
-          contrast={1.5}
-          gamma={1}
-          saturation={1}
-          centerX={0}
-          centerY={0}
-          zoom={0.9}
-        />
-      </div>
+      <GrainientBackground />
       <Card className="w-full max-w-md relative z-10 shadow-2xl backdrop-blur-sm bg-card/95">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
