@@ -96,14 +96,9 @@ export function ArquivoItem({ arquivo, obraId, viewMode, onView, isSelected = fa
   };
 
   const handleDownload = () => {
-    const link = document.createElement("a");
-    link.href = arquivo.arquivo_url;
-    link.download = arquivo.nome;
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const separator = arquivo.arquivo_url.includes("?") ? "&" : "?";
+    const downloadUrl = `${arquivo.arquivo_url}${separator}download=${encodeURIComponent(arquivo.nome)}`;
+    window.open(downloadUrl, "_blank");
   };
 
   const handleDragStart = (e: React.DragEvent) => {
