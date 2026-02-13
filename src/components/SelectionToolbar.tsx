@@ -41,32 +41,23 @@ export function SelectionToolbar({
   const handleDownloadSelected = async () => {
     if (selectedArquivos.length === 0) return;
 
-    setIsDownloading(true);
     toast.info(`Baixando ${selectedArquivos.length} arquivo(s)...`);
 
-    try {
-      for (const arquivo of selectedArquivos) {
-        const response = await fetch(arquivo.arquivo_url);
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = arquivo.nome;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        
-        // Small delay between downloads to prevent browser blocking
-        await new Promise(resolve => setTimeout(resolve, 300));
-      }
-      toast.success(`${selectedArquivos.length} arquivo(s) baixados com sucesso!`);
-      onClearSelection();
-    } catch {
-      toast.error("Erro ao baixar arquivos");
-    } finally {
-      setIsDownloading(false);
+    for (const arquivo of selectedArquivos) {
+      const link = document.createElement("a");
+      link.href = arquivo.arquivo_url;
+      link.download = arquivo.nome;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Small delay between downloads to prevent browser blocking
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
+    toast.success(`${selectedArquivos.length} arquivo(s) baixados com sucesso!`);
+    onClearSelection();
   };
 
   const handleMoveToTrash = async () => {
