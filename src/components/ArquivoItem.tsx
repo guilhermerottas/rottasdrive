@@ -95,21 +95,15 @@ export function ArquivoItem({ arquivo, obraId, viewMode, onView, isSelected = fa
     }
   };
 
-  const handleDownload = async () => {
-    try {
-      const response = await fetch(arquivo.arquivo_url);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = arquivo.nome;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      toast.error("Erro ao baixar arquivo");
-    }
+  const handleDownload = () => {
+    const link = document.createElement("a");
+    link.href = arquivo.arquivo_url;
+    link.download = arquivo.nome;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleDragStart = (e: React.DragEvent) => {
