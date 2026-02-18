@@ -85,7 +85,11 @@ const handler = async (req: Request): Promise<Response> => {
       </div>
     `;
 
-    // Send email using Resend (BCC for privacy)
+    // Send email using Resend
+    // NOTE: While using sandbox (onboarding@resend.dev), only the account owner email works.
+    // After verifying a domain in resend.com/domains, update `from` and remove the recipient override.
+    const sandboxRecipient = "tecnologia@rottasconstrutora.com.br";
+    
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -94,8 +98,7 @@ const handler = async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify({
         from: "Armazenamento Rottas <onboarding@resend.dev>",
-        to: [emails[0]],
-        bcc: emails.slice(1),
+        to: [sandboxRecipient],
         subject: `📁 Novos arquivos em "${obraNome}"`,
         html: htmlBody,
       }),
