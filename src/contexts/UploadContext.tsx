@@ -3,6 +3,7 @@ import { useCreateArquivoRecord } from "@/hooks/useArquivos";
 import { uploadFile } from "@/services/uploadService";
 import { toast } from "sonner";
 import * as tus from "tus-js-client";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface UploadItem {
     id: string;
@@ -42,9 +43,50 @@ export function UploadProvider({ children }: { children: ReactNode }) {
     const isProcessingRef = useRef(false);
     // Ref to hold the current upload ID being processed
     const currentUploadIdRef = useRef<string | null>(null);
+    // Track completed uploads for batch notification
+    const completedBatchRef = useRef<{ obraId: string; pastaId?: string | null; fileName: string }[]>([]);
+    const notifyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const updateUploadState = useCallback((id: string, updates: Partial<UploadItem>) => {
         setUploads(prev => prev.map(u => u.id === id ? { ...u, ...updates } : u));
+    }, []);
+
+    const sendUploadNotification = useCallback(async (batch: { obraId: string; pastaId?: string | null; fileName: string }[]) => {
+        if (batch.length === 0) return;
+        try {
+            // Group by obraId
+            const grouped = batch.reduce((acc, item) => {
+                if (!acc[item.obraId]) acc[item.obraId] = { pastaId: item.pastaId, files: [] };
+                acc[item.obraId].files.push(item.fileName);
+                return acc;
+            }, {} as Record<string, { pastaId?: string | null; files: string[] }>);
+
+            for (const [obraId, data] of Object.entries(grouped)) {
+                // Fetch obra name
+                const { data: obra } = await supabase.from("obras").select("nome").eq("id", obraId).single();
+                // Fetch pasta name if applicable
+                let pastaNome: string | null = null;
+                if (data.pastaId) {
+                    const { data: pasta } = await supabase.from("pastas").select("nome").eq("id", data.pastaId).single();
+                    pastaNome = pasta?.nome || null;
+                }
+                // Fetch current user profile name
+                const { data: { user } } = await supabase.auth.getUser();
+                const { data: profile } = await supabase.from("profiles").select("nome").eq("user_id", user?.id || "").single();
+
+                await supabase.functions.invoke("notify-upload", {
+                    body: {
+                        obraId,
+                        obraNome: obra?.nome || "Obra desconhecida",
+                        pastaNome,
+                        arquivos: data.files.map(nome => ({ nome })),
+                        uploaderName: profile?.nome || user?.email || "Usuário",
+                    },
+                });
+            }
+        } catch (err) {
+            console.error("Failed to send upload notification:", err);
+        }
     }, []);
 
     const processUpload = useCallback(async (upload: UploadItem) => {
@@ -91,6 +133,20 @@ export function UploadProvider({ children }: { children: ReactNode }) {
                         console.log("DB Record created:", upload.file.name);
                         updateUploadState(upload.id, { status: "completed", progress: 100 });
                         toast.success(`${upload.file.name} enviado com sucesso!`);
+
+                        // Track for batch notification
+                        completedBatchRef.current.push({
+                            obraId: upload.obraId,
+                            pastaId: upload.pastaId,
+                            fileName: upload.file.name,
+                        });
+                        // Debounce: send notification after queue drains
+                        if (notifyTimeoutRef.current) clearTimeout(notifyTimeoutRef.current);
+                        notifyTimeoutRef.current = setTimeout(() => {
+                            const batch = [...completedBatchRef.current];
+                            completedBatchRef.current = [];
+                            sendUploadNotification(batch);
+                        }, 3000);
                     } catch (dbError: any) {
                         console.error("DB Insert Error:", dbError);
                         updateUploadState(upload.id, { status: "error", error: "Erro ao salvar registro" });
