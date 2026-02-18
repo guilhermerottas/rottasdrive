@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Building2, Trash2, Pencil, MoreVertical } from "lucide-react";
+import { Building2, Trash2, Pencil, MoreVertical, Shield } from "lucide-react";
 import { Obra, useDeleteObra } from "@/hooks/useObras";
 import { toast } from "sonner";
 import {
@@ -22,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { EditObraDialog } from "./EditObraDialog";
+import { ManageObraAccessDialog } from "./ManageObraAccessDialog";
 import { useAuthContext } from "@/components/AuthProvider";
 
 interface ObraCardProps {
@@ -31,8 +32,9 @@ interface ObraCardProps {
 export function ObraCard({ obra }: ObraCardProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [accessOpen, setAccessOpen] = useState(false);
   const deleteObra = useDeleteObra();
-  const { canEdit } = useAuthContext();
+  const { canEdit, isAdmin } = useAuthContext();
 
   const handleDelete = async () => {
     try {
@@ -78,6 +80,12 @@ export function ObraCard({ obra }: ObraCardProps) {
                     <Pencil className="mr-2 h-4 w-4" />
                     Editar
                   </DropdownMenuItem>
+                  {isAdmin && (
+                    <DropdownMenuItem onClick={() => setAccessOpen(true)}>
+                      <Shield className="mr-2 h-4 w-4" />
+                      Gerenciar Acesso
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem 
                     onClick={() => setDeleteDialogOpen(true)}
                     className="text-destructive focus:text-destructive"
@@ -115,6 +123,7 @@ export function ObraCard({ obra }: ObraCardProps) {
       </AlertDialog>
 
       <EditObraDialog open={editOpen} onOpenChange={setEditOpen} obra={obra} />
+      <ManageObraAccessDialog open={accessOpen} onOpenChange={setAccessOpen} obra={obra} />
     </>
   );
 }
