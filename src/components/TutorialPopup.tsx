@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { X, Play } from "lucide-react";
+import tutorialThumb from "@/assets/tutorial-thumb.png";
 import { Button } from "@/components/ui/button";
 
 const TUTORIAL_URL = "https://drive.google.com/file/d/12YwQHyzLtfNnYRiYTIPSQ10lNnfzE997/view?usp=sharing";
@@ -32,10 +33,9 @@ export function TutorialPopup() {
         </h3>
 
         <div className="relative rounded-lg overflow-hidden bg-muted aspect-video mb-3 flex items-center justify-center">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5" />
-          <div className="relative flex flex-col items-center gap-1 text-muted-foreground">
-            <Play className="h-10 w-10 fill-primary text-primary" />
-            <span className="text-xs font-medium">Tutorial</span>
+          <img src={tutorialThumb} alt="Tutorial preview" className="absolute inset-0 w-full h-full object-cover" />
+          <div className="relative flex items-center justify-center rounded-full bg-black/50 h-10 w-10">
+            <Play className="h-5 w-5 fill-white text-white" />
           </div>
         </div>
 
