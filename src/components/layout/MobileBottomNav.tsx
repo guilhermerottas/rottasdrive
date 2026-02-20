@@ -19,7 +19,7 @@ export function MobileBottomNav() {
     : baseNavItems;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border shadow-[0_-4px_12px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border shadow-[0_-4px_12px_rgba(0,0,0,0.08)] pb-[max(env(safe-area-inset-bottom),24px)]">
       <div className="flex items-center justify-around h-16">
         {navItems.map((item) => {
           const isActive = location.pathname === item.url || 
