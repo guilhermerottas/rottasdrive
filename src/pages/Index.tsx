@@ -11,6 +11,7 @@ import { Building2, Plus } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Button } from "@/components/ui/button";
+import { TutorialPopup } from "@/components/TutorialPopup";
 
 const Index = () => {
   const { data: obras, isLoading } = useObras();
@@ -100,6 +101,7 @@ const Index = () => {
       </div>
 
       <CreateObraDialog open={createOpen} onOpenChange={setCreateOpen} showTrigger={false} />
+      <TutorialPopup />
     </AppLayout>
   );
 };
