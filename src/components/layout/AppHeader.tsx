@@ -1,4 +1,4 @@
-import { Search, Upload, FolderPlus, X } from "lucide-react";
+import { Search, Upload, FolderPlus, X, Clapperboard } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
@@ -97,6 +97,23 @@ export function AppHeader({
 
       {/* RIGHT: User profile */}
       <div className="flex-shrink-0 flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="hidden sm:flex gap-2 text-muted-foreground"
+          onClick={() => window.open("https://drive.google.com/file/d/12YwQHyzLtfNnYRiYTIPSQ10lNnfzE997/view?usp=sharing", "_blank")}
+        >
+          <Clapperboard className="h-4 w-4" />
+          Ver Tutorial
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="sm:hidden text-muted-foreground"
+          onClick={() => window.open("https://drive.google.com/file/d/12YwQHyzLtfNnYRiYTIPSQ10lNnfzE997/view?usp=sharing", "_blank")}
+        >
+          <Clapperboard className="h-4 w-4" />
+        </Button>
         <UploadHistoryButton />
         <UserProfileButton />
       </div>
