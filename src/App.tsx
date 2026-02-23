@@ -7,6 +7,7 @@ import { AuthProvider, useAuthContext } from "@/components/AuthProvider";
 import { UploadProvider } from "./contexts/UploadContext";
 import { UploadProgress } from "./components/UploadProgress";
 import { MobileSplashScreen } from "./components/MobileSplashScreen";
+import { Analytics } from "@vercel/analytics/react";
 import Index from "./pages/Index";
 import ObraDetail from "./pages/ObraDetail";
 import Favoritos from "./pages/Favoritos";
@@ -82,6 +83,7 @@ const App = () => (
           </UploadProvider>
         </AuthProvider>
       </BrowserRouter>
+      <Analytics />
     </TooltipProvider>
   </QueryClientProvider>
 );
