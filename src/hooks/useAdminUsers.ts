@@ -67,6 +67,7 @@ export const useAdminUsers = () => {
 
   const updateUserRole = useMutation({
     mutationFn: async ({ userId, newRole }: { userId: string; newRole: AppRole }) => {
+      // Update all role rows for this user to the new role
       const { error } = await supabase
         .from("user_roles")
         .update({ role: newRole })
