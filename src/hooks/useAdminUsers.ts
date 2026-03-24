@@ -45,13 +45,18 @@ export const useAdminUsers = () => {
 
       // Combine profiles with roles and blocked status
       const usersWithRoles: UserWithProfile[] = profiles.map((profile) => {
-        const userRole = roles.find((r) => r.user_id === profile.user_id);
+        const userRoles = roles.filter((r) => r.user_id === profile.user_id);
+        // Pick highest role: admin > editor > viewer/user
+        let role: AppRole = "viewer";
+        if (userRoles.some((r) => r.role === "admin")) role = "admin";
+        else if (userRoles.some((r) => r.role === "editor")) role = "editor";
+        
         return {
           user_id: profile.user_id,
           nome: profile.nome,
           avatar_url: profile.avatar_url,
           created_at: profile.created_at,
-          role: (userRole?.role as AppRole) || "viewer",
+          role,
           is_blocked: blockedUserIds.has(profile.user_id),
         };
       });
@@ -62,6 +67,7 @@ export const useAdminUsers = () => {
 
   const updateUserRole = useMutation({
     mutationFn: async ({ userId, newRole }: { userId: string; newRole: AppRole }) => {
+      // Update all role rows for this user to the new role
       const { error } = await supabase
         .from("user_roles")
         .update({ role: newRole })
