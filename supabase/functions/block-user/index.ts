@@ -1,16 +1,63 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// --- CORS: restrict to known origins ---
+const ALLOWED_ORIGINS = [
+  "https://rottasdrive.lovable.app",
+  "https://id-preview--27012e3a-a587-4fdf-94d2-3d830603f691.lovable.app",
+  "http://localhost:5173",
+  "http://localhost:3000",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("Origin") || "";
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  };
+}
+
+// --- Rate Limiting ---
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX = 5;
+
+function checkRateLimit(key: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(key);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT_MAX) {
+    return false;
+  }
+  entry.count++;
+  return true;
+}
+
+// --- UUID validation ---
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 Deno.serve(async (req) => {
+  const cors = getCorsHeaders(req);
+
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: cors });
   }
 
   try {
+    // Rate limit
+    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    if (!checkRateLimit(clientIp)) {
+      return new Response(
+        JSON.stringify({ error: "Muitas tentativas. Aguarde um momento." }),
+        { status: 429, headers: { "Content-Type": "application/json", ...cors } }
+      );
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const authHeader = req.headers.get("Authorization");
@@ -18,11 +65,11 @@ Deno.serve(async (req) => {
     if (!authHeader) {
       return new Response(
         JSON.stringify({ error: "No authorization header" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 401, headers: { ...cors, "Content-Type": "application/json" } }
       );
     }
 
-    // Create client with user's token to verify they're an admin
+    // Validate JWT via getUser() (server-side validation)
     const supabaseUser = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -31,7 +78,7 @@ Deno.serve(async (req) => {
     if (userError || !user) {
       return new Response(
         JSON.stringify({ error: "Invalid token" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 401, headers: { ...cors, "Content-Type": "application/json" } }
       );
     }
 
@@ -44,16 +91,17 @@ Deno.serve(async (req) => {
     if (!isAdmin) {
       return new Response(
         JSON.stringify({ error: "Only admins can block users" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 403, headers: { ...cors, "Content-Type": "application/json" } }
       );
     }
 
     const { userId, action } = await req.json();
 
-    if (!userId) {
+    // Validate userId as UUID
+    if (!userId || !UUID_REGEX.test(userId)) {
       return new Response(
-        JSON.stringify({ error: "userId is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Invalid userId" }),
+        { status: 400, headers: { ...cors, "Content-Type": "application/json" } }
       );
     }
 
@@ -61,7 +109,7 @@ Deno.serve(async (req) => {
     if (userId === user.id) {
       return new Response(
         JSON.stringify({ error: "You cannot block yourself" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...cors, "Content-Type": "application/json" } }
       );
     }
 
@@ -69,28 +117,26 @@ Deno.serve(async (req) => {
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
     if (action === "unblock") {
-      // Remove from blocked_users table
       const { error: deleteError } = await supabaseAdmin
         .from("blocked_users")
         .delete()
         .eq("user_id", userId);
 
       if (deleteError) {
-        console.error("Error unblocking user:", deleteError);
+        console.error("Error unblocking user:", deleteError.message);
         return new Response(
           JSON.stringify({ error: "Failed to unblock user" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 500, headers: { ...cors, "Content-Type": "application/json" } }
         );
       }
 
       return new Response(
         JSON.stringify({ success: true, message: "User unblocked successfully" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: { ...cors, "Content-Type": "application/json" } }
       );
     }
 
     // Block user flow
-    // 1. Add to blocked_users table
     const { error: blockError } = await supabaseAdmin
       .from("blocked_users")
       .insert({
@@ -99,37 +145,34 @@ Deno.serve(async (req) => {
       });
 
     if (blockError) {
-      // Check if already blocked
       if (blockError.code === "23505") {
         return new Response(
           JSON.stringify({ error: "User is already blocked" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 400, headers: { ...cors, "Content-Type": "application/json" } }
         );
       }
-      console.error("Error blocking user:", blockError);
+      console.error("Error blocking user:", blockError.message);
       return new Response(
         JSON.stringify({ error: "Failed to block user" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 500, headers: { ...cors, "Content-Type": "application/json" } }
       );
     }
 
-    // 2. Sign out the user from all sessions using admin API
+    // Sign out the user from all sessions
     const { error: signOutError } = await supabaseAdmin.auth.admin.signOut(userId, "global");
-
     if (signOutError) {
-      console.error("Error signing out user:", signOutError);
-      // Don't fail the request, user is still blocked
+      console.error("Error signing out user:", signOutError.message);
     }
 
     return new Response(
       JSON.stringify({ success: true, message: "User blocked and signed out" }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...cors, "Content-Type": "application/json" } }
     );
-  } catch (error) {
-    console.error("Error:", error);
+  } catch (error: any) {
+    console.error("Error:", error.message);
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });

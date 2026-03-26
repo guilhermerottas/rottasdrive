@@ -3,12 +3,45 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+// --- CORS: restrict to known origins ---
+const ALLOWED_ORIGINS = [
+  "https://rottasdrive.lovable.app",
+  "https://id-preview--27012e3a-a587-4fdf-94d2-3d830603f691.lovable.app",
+  "http://localhost:5173",
+  "http://localhost:3000",
+];
 
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("Origin") || "";
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  };
+}
+
+// --- Rate Limiting ---
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX = 10;
+
+function checkRateLimit(key: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(key);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT_MAX) {
+    return false;
+  }
+  entry.count++;
+  return true;
+}
+
+// --- HTML escaping ---
 function escapeHtml(str: string): string {
   return str
     .replace(/&/g, "&amp;")
@@ -17,6 +50,9 @@ function escapeHtml(str: string): string {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
+
+// --- UUID validation ---
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 interface NotifyRequest {
   obraId: string;
@@ -27,8 +63,10 @@ interface NotifyRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  const cors = getCorsHeaders(req);
+
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: cors });
   }
 
   try {
@@ -36,12 +74,21 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("RESEND_API_KEY is not configured");
     }
 
-    // Validate JWT
+    // Rate limit
+    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    if (!checkRateLimit(clientIp)) {
+      return new Response(
+        JSON.stringify({ error: "Muitas tentativas. Aguarde um momento." }),
+        { status: 429, headers: { "Content-Type": "application/json", ...cors } }
+      );
+    }
+
+    // Validate JWT via getUser() (server-side validation)
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        { status: 401, headers: { "Content-Type": "application/json", ...cors } }
       );
     }
 
@@ -53,13 +100,11 @@ const handler = async (req: Request): Promise<Response> => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const { data: claimsData, error: claimsError } = await supabaseUser.auth.getClaims(
-      authHeader.replace("Bearer ", "")
-    );
-    if (claimsError || !claimsData?.claims) {
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+    if (userError || !user) {
       return new Response(
         JSON.stringify({ error: "Invalid token" }),
-        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        { status: 401, headers: { "Content-Type": "application/json", ...cors } }
       );
     }
 
@@ -67,11 +112,19 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { obraId, obraNome, pastaNome, arquivos, uploaderName }: NotifyRequest = await req.json();
 
+    // Validate UUID format for obraId
+    if (!obraId || !UUID_REGEX.test(obraId)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid obra ID" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...cors } }
+      );
+    }
+
     // Validate inputs
-    if (!obraId || !obraNome || !arquivos || !Array.isArray(arquivos) || arquivos.length === 0) {
+    if (!obraNome || !arquivos || !Array.isArray(arquivos) || arquivos.length === 0) {
       return new Response(
         JSON.stringify({ error: "Invalid request data" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        { status: 400, headers: { "Content-Type": "application/json", ...cors } }
       );
     }
 
@@ -86,19 +139,28 @@ const handler = async (req: Request): Promise<Response> => {
 
     const restrictedUserIds = new Set((restrictions || []).map((r: any) => r.user_id));
 
-    // Get all users from auth
-    const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers({ perPage: 1000 });
-    if (usersError) throw usersError;
+    // Get all users from auth with pagination
+    let allUsers: any[] = [];
+    let page = 1;
+    const perPage = 500;
+    while (true) {
+      const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers({ page, perPage });
+      if (usersError) throw usersError;
+      allUsers = allUsers.concat(users || []);
+      if (!users || users.length < perPage) break;
+      page++;
+      if (page > 20) break; // Safety limit
+    }
 
     // Filter out restricted users and collect emails
-    const emails = (users || [])
+    const emails = allUsers
       .filter((u: any) => !restrictedUserIds.has(u.id) && u.email)
       .map((u: any) => u.email);
 
     if (emails.length === 0) {
       return new Response(JSON.stringify({ message: "No recipients" }), {
         status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { "Content-Type": "application/json", ...cors },
       });
     }
 
@@ -161,13 +223,13 @@ const handler = async (req: Request): Promise<Response> => {
 
     return new Response(JSON.stringify({ success: true, recipients: emails.length }), {
       status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
+      headers: { "Content-Type": "application/json", ...cors },
     });
   } catch (error: any) {
     console.error("Error in notify-upload:", error.message);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
+      headers: { "Content-Type": "application/json", ...getCorsHeaders(req) },
     });
   }
 };
