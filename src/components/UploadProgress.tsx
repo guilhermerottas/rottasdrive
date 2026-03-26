@@ -7,7 +7,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 export function UploadProgress() {
-    const { uploads, isOpen, setIsOpen, minimized, setMinimized, removeUpload, clearCompleted } = useUpload();
+    const context = useContext(UploadContext);
+
+    if (!context) return null;
+
+    const { uploads, isOpen, setIsOpen, minimized, setMinimized, removeUpload, clearCompleted } = context;
 
     if (!isOpen || uploads.length === 0) return null;
 
