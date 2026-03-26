@@ -129,8 +129,8 @@ export function UploadProvider({ children }: { children: ReactNode }) {
                             pastaId: upload.pastaId,
                             nome: upload.file.name,
                             arquivoUrl: publicUrl,
-                            tipo: upload.file.type,
-                            tamanho: upload.file.size,
+                            tipo: fileToUpload.type,
+                            tamanho: fileToUpload.size,
                             descricao: upload.descricao,
                         });
 
