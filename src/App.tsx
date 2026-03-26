@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuthContext } from "@/components/AuthProvider";
+import { useRealtimeSubscriptions } from "@/hooks/useRealtimeSubscriptions";
 import { UploadProvider } from "./contexts/UploadContext";
 import { UploadProgress } from "./components/UploadProgress";
 import { MobileSplashScreen } from "./components/MobileSplashScreen";
@@ -55,19 +56,23 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-const AppRoutes = () => (
-  <Routes>
-    <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
-    <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-    <Route path="/favoritos" element={<ProtectedRoute><Favoritos /></ProtectedRoute>} />
-    <Route path="/lixeira" element={<ProtectedRoute><Lixeira /></ProtectedRoute>} />
-    <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
-    <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
-    <Route path="/obra/:obraId" element={<ProtectedRoute><ObraDetail /></ProtectedRoute>} />
-    <Route path="/obra/:obraId/pasta/:pastaId" element={<ProtectedRoute><ObraDetail /></ProtectedRoute>} />
-    <Route path="*" element={<NotFound />} />
-  </Routes>
-);
+const AppRoutes = () => {
+  useRealtimeSubscriptions();
+
+  return (
+    <Routes>
+      <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
+      <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+      <Route path="/favoritos" element={<ProtectedRoute><Favoritos /></ProtectedRoute>} />
+      <Route path="/lixeira" element={<ProtectedRoute><Lixeira /></ProtectedRoute>} />
+      <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
+      <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+      <Route path="/obra/:obraId" element={<ProtectedRoute><ObraDetail /></ProtectedRoute>} />
+      <Route path="/obra/:obraId/pasta/:pastaId" element={<ProtectedRoute><ObraDetail /></ProtectedRoute>} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
