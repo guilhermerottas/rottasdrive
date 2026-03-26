@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 export function useStorageUsage() {
   return useQuery({
     queryKey: ["storage-usage"],
+    staleTime: 10 * 60 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("arquivos")

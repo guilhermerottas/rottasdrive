@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 
@@ -26,56 +26,74 @@ export const useAuth = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<UserRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const fetchedUserIdRef = useRef<string | null>(null);
+  const isFetchingRef = useRef(false);
 
-  const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
-    setProfile(data);
-  };
+  const fetchUserData = useCallback(async (userId: string, force = false) => {
+    // Skip if already fetched for this user and not forced
+    if (!force && fetchedUserIdRef.current === userId) return;
+    // Skip if already fetching
+    if (isFetchingRef.current) return;
+    
+    isFetchingRef.current = true;
+    fetchedUserIdRef.current = userId;
 
-  const fetchRoles = async (userId: string) => {
-    const { data } = await supabase
-      .from("user_roles")
-      .select("*")
-      .eq("user_id", userId);
-    setRoles((data as UserRole[]) || []);
-  };
+    try {
+      const [profileRes, rolesRes] = await Promise.all([
+        supabase.from("profiles").select("*").eq("user_id", userId).single(),
+        supabase.from("user_roles").select("*").eq("user_id", userId),
+      ]);
+
+      setProfile(profileRes.data);
+      setRoles((rolesRes.data as UserRole[]) || []);
+    } finally {
+      isFetchingRef.current = false;
+    }
+  }, []);
 
   useEffect(() => {
+    let mounted = true;
+
+    // Set up auth listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!mounted) return;
+        
         setSession(session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
+          // Use setTimeout to avoid Supabase deadlock
           setTimeout(() => {
-            fetchProfile(session.user.id);
-            fetchRoles(session.user.id);
+            if (mounted) fetchUserData(session.user.id);
           }, 0);
         } else {
           setProfile(null);
           setRoles([]);
+          fetchedUserIdRef.current = null;
         }
         setLoading(false);
       }
     );
 
+    // Then get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        fetchProfile(session.user.id);
-        fetchRoles(session.user.id);
+        fetchUserData(session.user.id);
       }
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [fetchUserData]);
 
   const signIn = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -83,7 +101,6 @@ export const useAuth = () => {
       password,
     });
 
-    // Check if user is blocked after successful login
     if (data?.user && !error) {
       const { data: isBlocked } = await supabase.rpc("is_user_blocked", {
         _user_id: data.user.id,
@@ -119,6 +136,7 @@ export const useAuth = () => {
     setSession(null);
     setProfile(null);
     setRoles([]);
+    fetchedUserIdRef.current = null;
   };
 
   const updateProfile = async (updates: Partial<Profile>) => {
@@ -135,7 +153,7 @@ export const useAuth = () => {
       });
 
     if (!error) {
-      await fetchProfile(user.id);
+      await fetchUserData(user.id, true);
     }
 
     return { error };
@@ -157,7 +175,6 @@ export const useAuth = () => {
     const fileExt = file.name.split(".").pop();
     const fileName = `${user.id}/avatar.${fileExt}`;
 
-    // Delete old avatar if exists
     if (profile?.avatar_url) {
       const oldPath = profile.avatar_url.split("/").slice(-2).join("/");
       await supabase.storage.from("avatars").remove([oldPath]);
@@ -180,16 +197,10 @@ export const useAuth = () => {
     return { error: null, url: avatarUrl };
   };
 
-  // Check if user has a specific role
   const hasRole = (role: AppRole) => roles.some((r) => r.role === role);
-
-  // Check if user is admin (level 1)
   const isAdmin = hasRole("admin");
-
-  // Check if user can edit (admin or editor - levels 1 and 2)
   const canEdit = hasRole("admin") || hasRole("editor");
 
-  // Get the user's primary role
   const getUserRole = (): AppRole => {
     if (hasRole("admin")) return "admin";
     if (hasRole("editor")) return "editor";
@@ -213,6 +224,6 @@ export const useAuth = () => {
     updateEmail,
     updatePassword,
     uploadAvatar,
-    refetchProfile: () => user && fetchProfile(user.id),
+    refetchProfile: () => user && fetchUserData(user.id, true),
   };
 };
