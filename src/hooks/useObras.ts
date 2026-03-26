@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { compressCoverImage } from "@/utils/imageCompression";
 
 export interface Obra {
   id: string;
@@ -64,10 +65,11 @@ export function useCreateObra() {
 
       // Upload photo if provided
       if (foto) {
-        const fileName = `obras/${Date.now()}_${foto.name}`;
+        const compressedFoto = await compressCoverImage(foto);
+        const fileName = `obras/${Date.now()}_${compressedFoto.name}`;
         const { error: uploadError } = await supabase.storage
           .from("arquivos")
-          .upload(fileName, foto);
+          .upload(fileName, compressedFoto);
 
         if (uploadError) throw uploadError;
 
@@ -116,10 +118,11 @@ export function useUpdateObra() {
 
       // Upload new photo if provided
       if (foto) {
-        const fileName = `obras/${Date.now()}_${foto.name}`;
+        const compressedFoto = await compressCoverImage(foto);
+        const fileName = `obras/${Date.now()}_${compressedFoto.name}`;
         const { error: uploadError } = await supabase.storage
           .from("arquivos")
-          .upload(fileName, foto);
+          .upload(fileName, compressedFoto);
 
         if (uploadError) throw uploadError;
 
