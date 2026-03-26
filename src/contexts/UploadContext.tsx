@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, ReactNode, use
 import { useCreateArquivoRecord } from "@/hooks/useArquivos";
 import { uploadFile } from "@/services/uploadService";
 import { toast } from "sonner";
+import { compressUploadImage } from "@/utils/imageCompression";
 import * as tus from "tus-js-client";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -99,15 +100,18 @@ export function UploadProvider({ children }: { children: ReactNode }) {
         console.log("Starting upload processing for:", upload.file.name);
         updateUploadState(upload.id, { status: "uploading", progress: 0 });
 
-        const sanitizedName = upload.file.name
-            .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // remove accents
-            .replace(/[^a-zA-Z0-9._-]/g, "_"); // replace special chars
+        // Compress image files before upload
+        const fileToUpload = await compressUploadImage(upload.file);
+
+        const sanitizedName = fileToUpload.name
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-zA-Z0-9._-]/g, "_");
         const fileName = `${upload.obraId}/${upload.pastaId || "root"}/${Date.now()}_${sanitizedName}`;
         const bucketName = "arquivos";
 
         try {
             const uploadInstance = await uploadFile({
-                file: upload.file,
+                file: fileToUpload,
                 bucketName,
                 fileName,
                 onProgress: (bytesUploaded, bytesTotal) => {
@@ -125,8 +129,8 @@ export function UploadProvider({ children }: { children: ReactNode }) {
                             pastaId: upload.pastaId,
                             nome: upload.file.name,
                             arquivoUrl: publicUrl,
-                            tipo: upload.file.type,
-                            tamanho: upload.file.size,
+                            tipo: fileToUpload.type,
+                            tamanho: fileToUpload.size,
                             descricao: upload.descricao,
                         });
 
