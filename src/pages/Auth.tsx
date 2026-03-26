@@ -188,7 +188,7 @@ const Auth = () => {
       });
 
       if (fnError || fnData?.error) {
-        toast.error("Erro ao criar conta: " + (fnData?.error || fnError?.message));
+        toast.error("Erro ao criar conta. Tente novamente.");
         setLoading(false);
         return;
       }
@@ -200,7 +200,7 @@ const Auth = () => {
       });
 
       if (signInError) {
-        toast.error("Conta criada, mas erro ao fazer login: " + signInError.message);
+        toast.error("Conta criada, mas erro ao fazer login. Tente entrar pela tela de login.");
         setLoading(false);
         setInviteStep("done");
         setTimeout(() => navigate("/auth"), 2000);
