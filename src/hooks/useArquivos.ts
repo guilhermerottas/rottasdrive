@@ -29,6 +29,7 @@ export interface ArquivoWithObra extends Arquivo {
 export function useArquivos(obraId: string, pastaId?: string | null) {
   return useQuery({
     queryKey: ["arquivos", obraId, pastaId],
+    staleTime: 2 * 60 * 1000,
     queryFn: async () => {
       let query = supabase
         .from("arquivos")

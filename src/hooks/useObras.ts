@@ -14,6 +14,7 @@ export interface Obra {
 export function useObras() {
   return useQuery({
     queryKey: ["obras"],
+    staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("obras")
@@ -29,6 +30,7 @@ export function useObras() {
 export function useObra(id: string) {
   return useQuery({
     queryKey: ["obra", id],
+    staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("obras")

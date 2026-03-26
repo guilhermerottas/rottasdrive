@@ -22,6 +22,7 @@ export interface PastaWithObra extends Pasta {
 export function usePastas(obraId: string, pastaPaiId?: string | null) {
   return useQuery({
     queryKey: ["pastas", obraId, pastaPaiId],
+    staleTime: 2 * 60 * 1000,
     queryFn: async () => {
       let query = supabase
         .from("pastas")
@@ -164,6 +165,7 @@ export function useUpdatePastaColor() {
 export function usePastaBreadcrumb(pastaId: string | null) {
   return useQuery({
     queryKey: ["pasta-breadcrumb", pastaId],
+    staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       if (!pastaId) return [];
 
