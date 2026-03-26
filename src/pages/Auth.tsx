@@ -76,7 +76,7 @@ const Auth = () => {
     });
 
     if (error) {
-      toast.error("Erro ao fazer login: " + error.message);
+      toast.error("Email ou senha inválidos.");
     } else {
       toast.success("Login realizado com sucesso!");
       navigate("/");
@@ -94,7 +94,7 @@ const Auth = () => {
     );
 
     if (error) {
-      toast.error("Erro ao enviar email: " + error.message);
+      toast.error("Erro ao enviar email de recuperação. Tente novamente.");
     } else {
       toast.success("Email enviado! Verifique sua caixa de entrada.");
       setShowForgotPassword(false);

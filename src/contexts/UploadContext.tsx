@@ -97,7 +97,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
         isProcessingRef.current = true;
         currentUploadIdRef.current = upload.id;
 
-        console.log("Starting upload processing for:", upload.file.name);
+        // Upload processing started
         updateUploadState(upload.id, { status: "uploading", progress: 0 });
 
         // Compress image files before upload
@@ -119,7 +119,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
                     updateUploadState(upload.id, { progress: percentage });
                 },
                 onSuccess: async () => {
-                    console.log("Upload TUS success:", upload.file.name);
+                    // TUS upload completed successfully
                     try {
                         // File uploaded to storage, now create DB record
                         const publicUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/${bucketName}/${fileName}`;
@@ -134,7 +134,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
                             descricao: upload.descricao,
                         });
 
-                        console.log("DB Record created:", upload.file.name);
+                        // DB record created successfully
                         updateUploadState(upload.id, { status: "completed", progress: 100 });
                         toast.success(`${upload.file.name} enviado com sucesso!`);
 

@@ -9,6 +9,15 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 interface NotifyRequest {
   obraId: string;
   obraNome: string;
@@ -27,11 +36,47 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("RESEND_API_KEY is not configured");
     }
 
+    // Validate JWT
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const { data: claimsData, error: claimsError } = await supabaseUser.auth.getClaims(
+      authHeader.replace("Bearer ", "")
+    );
+    if (claimsError || !claimsData?.claims) {
+      return new Response(
+        JSON.stringify({ error: "Invalid token" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const { obraId, obraNome, pastaNome, arquivos, uploaderName }: NotifyRequest = await req.json();
+
+    // Validate inputs
+    if (!obraId || !obraNome || !arquivos || !Array.isArray(arquivos) || arquivos.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "Invalid request data" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Limit array size to prevent abuse
+    const limitedArquivos = arquivos.slice(0, 50);
 
     // Get restricted user IDs for this obra
     const { data: restrictions } = await supabase
@@ -57,8 +102,13 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    const fileList = arquivos.map((a) => `<li>${a.nome}</li>`).join("");
-    const pastaInfo = pastaNome ? `<p><strong>Pasta:</strong> ${pastaNome}</p>` : "";
+    // Escape all user-provided content for HTML
+    const safeObraNome = escapeHtml(obraNome);
+    const safeUploaderName = escapeHtml(uploaderName || "Usuário");
+    const safePastaNome = pastaNome ? escapeHtml(pastaNome) : null;
+
+    const fileList = limitedArquivos.map((a) => `<li>${escapeHtml(a.nome)}</li>`).join("");
+    const pastaInfo = safePastaNome ? `<p><strong>Pasta:</strong> ${safePastaNome}</p>` : "";
 
     const htmlBody = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -67,10 +117,10 @@ const handler = async (req: Request): Promise<Response> => {
         </div>
         <div style="background: #ffffff; border: 1px solid #e5e7eb; border-top: none; padding: 24px; border-radius: 0 0 12px 12px;">
           <p style="color: #374151; font-size: 16px;">
-            <strong>${uploaderName}</strong> adicionou ${arquivos.length} arquivo(s) na obra:
+            <strong>${safeUploaderName}</strong> adicionou ${limitedArquivos.length} arquivo(s) na obra:
           </p>
           <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 4px; margin: 16px 0;">
-            <strong style="color: #92400e; font-size: 18px;">${obraNome}</strong>
+            <strong style="color: #92400e; font-size: 18px;">${safeObraNome}</strong>
           </div>
           ${pastaInfo ? `<div style="margin: 12px 0; color: #4b5563;">${pastaInfo}</div>` : ""}
           <p style="color: #374151; font-weight: 600; margin-top: 16px;">Arquivos:</p>
@@ -86,8 +136,6 @@ const handler = async (req: Request): Promise<Response> => {
     `;
 
     // Send email using Resend
-    // NOTE: While using sandbox (onboarding@resend.dev), only the account owner email works.
-    // After verifying a domain in resend.com/domains, update `from` and remove the recipient override.
     const sandboxRecipient = "tecnologia@rottasconstrutora.com.br";
     
     const res = await fetch("https://api.resend.com/emails", {
@@ -99,27 +147,25 @@ const handler = async (req: Request): Promise<Response> => {
       body: JSON.stringify({
         from: "Armazenamento Rottas <onboarding@resend.dev>",
         to: [sandboxRecipient],
-        subject: `📁 Novos arquivos em "${obraNome}"`,
+        subject: `📁 Novos arquivos em "${safeObraNome}"`,
         html: htmlBody,
       }),
     });
 
     if (!res.ok) {
       const errorData = await res.json();
-      console.error("Resend error:", errorData);
       throw new Error(errorData.message || "Failed to send email");
     }
 
-    const emailResponse = await res.json();
-    console.log("Upload notification sent to", emails.length, "recipients");
+    await res.json();
 
     return new Response(JSON.stringify({ success: true, recipients: emails.length }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   } catch (error: any) {
-    console.error("Error in notify-upload:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error("Error in notify-upload:", error.message);
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
