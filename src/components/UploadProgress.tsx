@@ -1,5 +1,5 @@
-import React from "react";
-import { useUpload } from "@/contexts/UploadContext";
+import React, { useContext } from "react";
+import { UploadContext } from "@/contexts/UploadContext";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { X, Minimize2, Maximize2, FileCheck, FileWarning, Loader2 } from "lucide-react";
