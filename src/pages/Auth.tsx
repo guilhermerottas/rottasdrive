@@ -76,7 +76,7 @@ const Auth = () => {
     });
 
     if (error) {
-      toast.error("Erro ao fazer login: " + error.message);
+      toast.error("Email ou senha inválidos.");
     } else {
       toast.success("Login realizado com sucesso!");
       navigate("/");
@@ -94,7 +94,7 @@ const Auth = () => {
     );
 
     if (error) {
-      toast.error("Erro ao enviar email: " + error.message);
+      toast.error("Erro ao enviar email de recuperação. Tente novamente.");
     } else {
       toast.success("Email enviado! Verifique sua caixa de entrada.");
       setShowForgotPassword(false);
@@ -188,7 +188,7 @@ const Auth = () => {
       });
 
       if (fnError || fnData?.error) {
-        toast.error("Erro ao criar conta: " + (fnData?.error || fnError?.message));
+        toast.error("Erro ao criar conta. Tente novamente.");
         setLoading(false);
         return;
       }
@@ -200,7 +200,7 @@ const Auth = () => {
       });
 
       if (signInError) {
-        toast.error("Conta criada, mas erro ao fazer login: " + signInError.message);
+        toast.error("Conta criada, mas erro ao fazer login. Tente entrar pela tela de login.");
         setLoading(false);
         setInviteStep("done");
         setTimeout(() => navigate("/auth"), 2000);

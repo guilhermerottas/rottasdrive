@@ -96,8 +96,17 @@ export const useAuth = () => {
   }, [fetchUserData]);
 
   const signIn = async (email: string, password: string) => {
+    // Validate inputs before sending
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail || trimmedEmail.length > 255) {
+      return { data: null, error: { message: "Email inválido." } };
+    }
+    if (!password || password.length < 6 || password.length > 128) {
+      return { data: null, error: { message: "Senha inválida." } };
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
-      email,
+      email: trimmedEmail,
       password,
     });
 
@@ -119,12 +128,25 @@ export const useAuth = () => {
   };
 
   const signUp = async (email: string, password: string, nome: string) => {
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedNome = nome.trim();
+    
+    if (!trimmedEmail || trimmedEmail.length > 255) {
+      return { data: null, error: { message: "Email inválido." } };
+    }
+    if (!password || password.length < 6 || password.length > 128) {
+      return { data: null, error: { message: "A senha deve ter entre 6 e 128 caracteres." } };
+    }
+    if (!trimmedNome || trimmedNome.length > 100) {
+      return { data: null, error: { message: "Nome inválido." } };
+    }
+
     const { data, error } = await supabase.auth.signUp({
-      email,
+      email: trimmedEmail,
       password,
       options: {
         emailRedirectTo: window.location.origin,
-        data: { nome },
+        data: { nome: trimmedNome },
       },
     });
     return { data, error };
