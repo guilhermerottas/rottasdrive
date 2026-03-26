@@ -29,7 +29,7 @@ interface UploadContextType {
     setMinimized: (minimized: boolean) => void;
 }
 
-const UploadContext = createContext<UploadContextType | undefined>(undefined);
+export const UploadContext = createContext<UploadContextType | undefined>(undefined);
 
 export function UploadProvider({ children }: { children: ReactNode }) {
     const [uploads, setUploads] = useState<UploadItem[]>([]);
