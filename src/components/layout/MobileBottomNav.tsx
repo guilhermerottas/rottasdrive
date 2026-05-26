@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { useAuthContext } from "@/components/AuthProvider";
 
 const baseNavItems = [
-  { title: "Obras", url: "/", icon: Building2 },
+  { title: "Coleções", url: "/home", icon: Building2 },
   { title: "Favoritos", url: "/favoritos", icon: Star },
   { title: "Perfil", url: "/perfil", icon: User },
 ];
@@ -22,9 +22,9 @@ export function MobileBottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border shadow-[0_-4px_12px_rgba(0,0,0,0.08)] pb-[max(env(safe-area-inset-bottom),24px)]">
       <div className="flex items-center justify-around h-16">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.url || 
-            (item.url === "/" && location.pathname === "/") ||
-            (item.url !== "/" && location.pathname.startsWith(item.url));
+          const isActive = location.pathname === item.url ||
+            (item.url === "/home" && (location.pathname === "/" || location.pathname === "/home")) ||
+            (item.url !== "/home" && location.pathname.startsWith(item.url));
 
           return (
             <Link

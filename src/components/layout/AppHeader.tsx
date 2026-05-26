@@ -43,7 +43,7 @@ export function AppHeader({
               variant="outline"
               size="icon"
               onClick={onNewFolderClick}
-              className="sm:hidden h-9 w-9"
+              className="sm:hidden"
             >
               <FolderPlus className="h-4 w-4" />
             </Button>
@@ -64,7 +64,7 @@ export function AppHeader({
               variant="default"
               size="icon"
               onClick={onUploadClick}
-              className="sm:hidden h-9 w-9"
+              className="sm:hidden"
             >
               <Upload className="h-4 w-4" />
             </Button>
