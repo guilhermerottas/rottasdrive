@@ -1,39 +1,35 @@
 import { useState } from "react";
-import { useObras } from "@/hooks/useObras";
+import { useWorkspaces } from "@/hooks/useWorkspaces";
 import { useGlobalSearch } from "@/hooks/useGlobalSearch";
 import { useAuthContext } from "@/components/AuthProvider";
-import { ObraCard } from "@/components/ObraCard";
-import { CreateObraDialog } from "@/components/CreateObraDialog";
+import { WorkspaceCard } from "@/components/WorkspaceCard";
+import { CreateWorkspaceDialog } from "@/components/CreateWorkspaceDialog";
 import { GlobalSearchResults } from "@/components/GlobalSearchResults";
 import { ObraCardSkeleton } from "@/components/skeletons/ObraCardSkeleton";
 import { AnimatedMasonry, MasonryItem } from "@/components/AnimatedMasonry";
-import { Building2, Plus } from "lucide-react";
+import { FolderKanban, Plus } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Button } from "@/components/ui/button";
 import { TutorialPopup } from "@/components/TutorialPopup";
 
 const Index = () => {
-  const { data: obras, isLoading } = useObras();
-  const { canEdit } = useAuthContext();
+  const { data: workspaces, isLoading } = useWorkspaces();
+  const { isAdmin } = useAuthContext();
   const [searchValue, setSearchValue] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
 
   const { data: searchResults, isLoading: isSearching } = useGlobalSearch(searchValue);
   const isSearchActive = searchValue.length >= 2;
 
-  const filteredObras = obras?.filter((obra) =>
-    obra.nome.toLowerCase().includes(searchValue.toLowerCase()) ||
-    obra.endereco?.toLowerCase().includes(searchValue.toLowerCase())
+  const filteredWorkspaces = workspaces?.filter((w) =>
+    w.nome.toLowerCase().includes(searchValue.toLowerCase())
   );
 
   return (
     <AppLayout>
-      <AppHeader 
-        searchValue={searchValue}
-        onSearchChange={setSearchValue}
-      />
-      
+      <AppHeader searchValue={searchValue} onSearchChange={setSearchValue} />
+
       <div className="flex-1 overflow-auto p-3 sm:p-6">
         {isSearchActive ? (
           <GlobalSearchResults
@@ -45,53 +41,48 @@ const Index = () => {
           <>
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h1 className="text-2xl font-bold">Obras</h1>
+                <h1 className="text-2xl font-bold">Workspaces</h1>
                 <p className="text-muted-foreground text-sm">
-                  Total: {obras?.length || 0} obras
+                  Selecione um workspace para ver as coleções
                 </p>
               </div>
-              {canEdit && (
+              {isAdmin && (
                 <Button onClick={() => setCreateOpen(true)} className="gap-2">
                   <Plus className="h-4 w-4" />
-                  Nova Obra
+                  Novo Workspace
                 </Button>
               )}
             </div>
 
             {isLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                {[1, 2, 3, 4].map((i) => (
                   <ObraCardSkeleton key={i} />
                 ))}
               </div>
-            ) : filteredObras && filteredObras.length > 0 ? (
+            ) : filteredWorkspaces && filteredWorkspaces.length > 0 ? (
               <AnimatedMasonry
-                breakpointCols={{
-                  default: 4,
-                  1536: 4,
-                  1280: 4,
-                  1024: 3,
-                  640: 2,
-                  480: 1,
-                }}
+                breakpointCols={{ default: 4, 1536: 4, 1280: 4, 1024: 3, 640: 2, 480: 1 }}
               >
-                {filteredObras.map((obra, index) => (
-                  <MasonryItem key={obra.id} delay={index * 0.05}>
-                    <ObraCard obra={obra} />
+                {filteredWorkspaces.map((workspace, index) => (
+                  <MasonryItem key={workspace.id} delay={index * 0.05}>
+                    <WorkspaceCard workspace={workspace} />
                   </MasonryItem>
                 ))}
               </AnimatedMasonry>
             ) : (
               <div className="text-center py-16">
-                <Building2 className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
-                <h2 className="text-xl font-semibold mb-2">Nenhuma obra cadastrada</h2>
+                <FolderKanban className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
+                <h2 className="text-xl font-semibold mb-2">Nenhum workspace disponível</h2>
                 <p className="text-muted-foreground mb-6">
-                  Comece criando sua primeira obra para organizar seus arquivos.
+                  {isAdmin
+                    ? "Crie o primeiro workspace para organizar as coleções por setor."
+                    : "Você ainda não faz parte de nenhum workspace. Fale com um administrador."}
                 </p>
-                {canEdit && (
+                {isAdmin && (
                   <Button onClick={() => setCreateOpen(true)} className="gap-2">
                     <Plus className="h-4 w-4" />
-                    Nova Obra
+                    Novo Workspace
                   </Button>
                 )}
               </div>
@@ -100,7 +91,7 @@ const Index = () => {
         )}
       </div>
 
-      <CreateObraDialog open={createOpen} onOpenChange={setCreateOpen} showTrigger={false} />
+      <CreateWorkspaceDialog open={createOpen} onOpenChange={setCreateOpen} />
       <TutorialPopup />
     </AppLayout>
   );

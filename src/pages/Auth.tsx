@@ -79,7 +79,7 @@ const Auth = () => {
       toast.error("Email ou senha inválidos.");
     } else {
       toast.success("Login realizado com sucesso!");
-      navigate("/");
+      navigate("/home");
     }
     setLoading(false);
   };
@@ -230,7 +230,7 @@ const Auth = () => {
 
       setInviteStep("done");
       toast.success("Conta criada com sucesso!");
-      setTimeout(() => navigate("/"), 1500);
+      setTimeout(() => navigate("/home"), 1500);
     } catch {
       toast.error("Erro ao criar conta.");
     }

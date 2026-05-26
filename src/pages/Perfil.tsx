@@ -58,6 +58,9 @@ export default function Perfil() {
               <CardTitle className="text-3xl font-bold">
                 {profile?.nome || "Usuário sem nome"}
               </CardTitle>
+              {profile?.cargo && (
+                <p className="text-muted-foreground font-medium">{profile.cargo}</p>
+              )}
             </CardHeader>
             <CardContent className="space-y-6 mt-4">
 
