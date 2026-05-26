@@ -56,6 +56,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAuthContext } from "@/components/AuthProvider";
+import { useSignedUrl, resolveArquivoUrl } from "@/lib/storage";
 
 interface ArquivosTableViewProps {
   arquivos: Arquivo[];
@@ -135,6 +136,7 @@ function ArquivoTableRow({ arquivo, obraId, onView, isSelected, onToggleSelectio
   const toggleFavorito = useToggleFavorito();
   const Icon = getFileIcon(arquivo.tipo);
   const isImage = arquivo.tipo?.startsWith("image/");
+  const { url: signedUrl } = useSignedUrl(arquivo.arquivo_url);
 
   const handleToggleFavorito = () => {
     toggleFavorito.mutate({ arquivoId: arquivo.id, isFavorito: !!isFavorito });
@@ -149,9 +151,14 @@ function ArquivoTableRow({ arquivo, obraId, onView, isSelected, onToggleSelectio
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
+    const url = await resolveArquivoUrl(arquivo.arquivo_url);
+    if (!url) {
+      toast.error("Não foi possível gerar o link de download.");
+      return;
+    }
     const link = document.createElement("a");
-    link.href = arquivo.arquivo_url;
+    link.href = url;
     link.download = arquivo.nome;
     link.target = "_blank";
     link.rel = "noopener noreferrer";
@@ -160,21 +167,27 @@ function ArquivoTableRow({ arquivo, obraId, onView, isSelected, onToggleSelectio
     document.body.removeChild(link);
   };
 
-  const handleShareWhatsApp = () => {
-    const url = encodeURIComponent(arquivo.arquivo_url);
+  const handleShareWhatsApp = async () => {
+    const signed = await resolveArquivoUrl(arquivo.arquivo_url);
+    if (!signed) { toast.error("Não foi possível gerar o link."); return; }
+    const url = encodeURIComponent(signed);
     const text = encodeURIComponent(`Confira este arquivo: ${arquivo.nome}`);
     window.open(`https://wa.me/?text=${text}%20${url}`, "_blank");
   };
 
-  const handleShareEmail = () => {
+  const handleShareEmail = async () => {
+    const signed = await resolveArquivoUrl(arquivo.arquivo_url);
+    if (!signed) { toast.error("Não foi possível gerar o link."); return; }
     const subject = encodeURIComponent(`Arquivo: ${arquivo.nome}`);
-    const body = encodeURIComponent(`Confira este arquivo: ${arquivo.arquivo_url}`);
+    const body = encodeURIComponent(`Confira este arquivo: ${signed}`);
     window.open(`mailto:?subject=${subject}&body=${body}`, "_blank");
   };
 
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(arquivo.arquivo_url);
+      const signed = await resolveArquivoUrl(arquivo.arquivo_url);
+      if (!signed) throw new Error("sem url");
+      await navigator.clipboard.writeText(signed);
       toast.success("Link copiado para a área de transferência!");
     } catch {
       toast.error("Erro ao copiar link");
@@ -200,9 +213,9 @@ function ArquivoTableRow({ arquivo, obraId, onView, isSelected, onToggleSelectio
         </TableCell>
         <TableCell className="py-2">
           <div className="flex items-center gap-3">
-            {isImage ? (
+            {isImage && signedUrl ? (
               <img
-                src={arquivo.arquivo_url}
+                src={signedUrl}
                 alt={arquivo.nome}
                 className="h-8 w-8 object-cover rounded flex-shrink-0"
               />

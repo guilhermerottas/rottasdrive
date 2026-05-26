@@ -110,7 +110,7 @@ export function ManageObraAccessDialog({ open, onOpenChange, obra }: ManageObraA
             Gerenciar Acesso
           </DialogTitle>
           <DialogDescription>
-            Controle quais visualizadores podem acessar a obra "{obra.nome}". Admins e Editores sempre têm acesso.
+            Controle quais visualizadores podem acessar a coleção "{obra.nome}". Admins e Editores sempre têm acesso.
           </DialogDescription>
         </DialogHeader>
 

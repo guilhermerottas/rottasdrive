@@ -19,12 +19,14 @@ interface CreateObraDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   showTrigger?: boolean;
+  workspaceId: string;
 }
 
-export function CreateObraDialog({ 
-  open: controlledOpen, 
+export function CreateObraDialog({
+  open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
-  showTrigger = true 
+  showTrigger = true,
+  workspaceId,
 }: CreateObraDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
@@ -85,17 +87,18 @@ export function CreateObraDialog({
     }
 
     try {
-      await createObra.mutateAsync({ 
-        nome: trimmedNome, 
+      await createObra.mutateAsync({
+        nome: trimmedNome,
         descricao: descricao.trim() || undefined,
         endereco: endereco.trim() || undefined,
-        foto: fotoFile || undefined
+        foto: fotoFile || undefined,
+        workspaceId,
       });
-      toast.success("Obra criada com sucesso!");
+      toast.success("Coleção criada com sucesso!");
       resetForm();
       setOpen(false);
     } catch (error) {
-      toast.error("Erro ao criar obra");
+      toast.error("Erro ao criar coleção");
     }
   };
 
@@ -108,15 +111,16 @@ export function CreateObraDialog({
         <DialogTrigger asChild>
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            Nova Obra
+            Nova Coleção
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle>Criar Nova Obra</DialogTitle>
+          <DialogTitle>Criar Nova Coleção</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 sm:block sm:space-y-4">
+          <div className="flex-1 overflow-y-auto space-y-4 sm:overflow-visible sm:flex-none sm:space-y-4">
           {/* Photo Upload */}
           <div className="space-y-2">
             <Label>Foto de Perfil</Label>
@@ -163,7 +167,7 @@ export function CreateObraDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="nome">Nome da Obra *</Label>
+            <Label htmlFor="nome">Nome da Coleção *</Label>
             <Input
               id="nome"
               value={nome}
@@ -191,14 +195,19 @@ export function CreateObraDialog({
               id="descricao"
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
-              placeholder="Descrição da obra..."
+              placeholder="Descrição da coleção..."
               rows={3}
               maxLength={1000}
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={createObra.isPending}>
-            {createObra.isPending ? "Criando..." : "Criar Obra"}
+          </div>
+          <Button
+            type="submit"
+            className="w-full shrink-0 mt-4 sm:mt-0"
+            disabled={createObra.isPending}
+          >
+            {createObra.isPending ? "Criando..." : "Criar Coleção"}
           </Button>
         </form>
       </DialogContent>

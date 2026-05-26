@@ -2,7 +2,9 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Trash2, Palette, Folder, FileText, Calendar } from "lucide-react";
+import { Trash2, Palette, Folder, FileText, Calendar, Shield, Share2, Sparkles, Network } from "lucide-react";
+import { PastaPermissoesDialog } from "@/components/PastaPermissoesDialog";
+import { CompartilharPastaDialog } from "@/components/CompartilharPastaDialog";
 import { Pasta, PastaColor, useDeletePasta, useUpdatePastaColor } from "@/hooks/usePastas";
 import { useMoveArquivo } from "@/hooks/useArquivos";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +32,7 @@ import { useAuthContext } from "@/components/AuthProvider";
 
 interface PastaListItemProps {
   pasta: Pasta;
+  vinculoCount?: number;
 }
 
 const colorOptions: { value: PastaColor; label: string; color: string }[] = [
@@ -50,9 +53,11 @@ const folderColors: Record<PastaColor, string> = {
   beige: "text-[#eeeeda]",
 };
 
-export function PastaListItem({ pasta }: PastaListItemProps) {
+export function PastaListItem({ pasta, vinculoCount = 0 }: PastaListItemProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
+  const [permsOpen, setPermsOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const deletePasta = useDeletePasta();
   const { canEdit } = useAuthContext();
   const moveArquivo = useMoveArquivo();
@@ -131,8 +136,16 @@ export function PastaListItem({ pasta }: PastaListItemProps) {
         className="flex items-center gap-4 flex-1 min-w-0"
       >
         {/* Folder Icon */}
-        <div className={cn("flex-shrink-0", folderColor)}>
+        <div className={cn("flex-shrink-0 relative", folderColor)}>
           <Folder className="h-10 w-10 fill-current" />
+          {vinculoCount > 0 && (
+            <div
+              className="absolute -bottom-1 -right-1 bg-background border border-border rounded-full p-0.5 shadow-sm"
+              title={`Compartilhada com ${vinculoCount} workspace${vinculoCount > 1 ? "s" : ""}`}
+            >
+              <Network className="h-3 w-3 text-primary" />
+            </div>
+          )}
         </div>
 
         {/* Info */}
@@ -188,6 +201,53 @@ export function PastaListItem({ pasta }: PastaListItemProps) {
           </PopoverContent>
         </Popover>
 
+        {/* Indexar para o chat — Em breve */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 rounded-full hover:bg-primary/10 hover:text-primary"
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            toast.info("Em breve", {
+              description: "Chat IA em desenvolvimento — disponível em breve.",
+            });
+          }}
+          title="Chat IA — em breve"
+        >
+          <Sparkles className="h-4 w-4" />
+        </Button>
+
+        {/* Compartilhar */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 rounded-full"
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            setShareOpen(true);
+          }}
+          title="Compartilhar pasta"
+        >
+          <Share2 className="h-4 w-4" />
+        </Button>
+
+        {/* Permissões */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 rounded-full"
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            setPermsOpen(true);
+          }}
+          title="Permissões da pasta"
+        >
+          <Shield className="h-4 w-4" />
+        </Button>
+
         {/* Delete Button */}
         <AlertDialog>
           <AlertDialogTrigger asChild>
@@ -216,6 +276,9 @@ export function PastaListItem({ pasta }: PastaListItemProps) {
           </AlertDialogContent>
         </AlertDialog>
       </div>}
+
+      <PastaPermissoesDialog open={permsOpen} onOpenChange={setPermsOpen} pasta={pasta} />
+      <CompartilharPastaDialog open={shareOpen} onOpenChange={setShareOpen} pasta={pasta} />
     </div>
   );
 }

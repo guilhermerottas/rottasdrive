@@ -4,6 +4,7 @@ import { SearchResult } from "@/hooks/useGlobalSearch";
 import { FileViewer } from "./FileViewer";
 import { SearchResultSkeleton } from "./skeletons/SearchResultSkeleton";
 import { useNavigate } from "react-router-dom";
+import { useSignedUrls } from "@/lib/storage";
 
 interface GlobalSearchResultsProps {
   results: SearchResult[];
@@ -29,6 +30,7 @@ export function GlobalSearchResults({ results, isLoading, searchTerm }: GlobalSe
   const navigate = useNavigate();
   const [viewerOpen, setViewerOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<SearchResult | null>(null);
+  const signed = useSignedUrls(results.map((r) => r.arquivo_url));
 
   const handleFileClick = (file: SearchResult) => {
     setSelectedFile(file);
@@ -88,9 +90,9 @@ export function GlobalSearchResults({ results, isLoading, searchTerm }: GlobalSe
           >
             {/* File thumbnail or icon */}
             <div className="flex-shrink-0 w-10 h-10 sm:w-[100px] sm:h-[100px] rounded-md sm:rounded-lg overflow-hidden bg-muted flex items-center justify-center">
-              {file.tipo?.startsWith("image/") ? (
+              {file.tipo?.startsWith("image/") && signed.get(file.arquivo_url) ? (
                 <img
-                  src={file.arquivo_url}
+                  src={signed.get(file.arquivo_url) || ""}
                   alt={file.nome}
                   className="w-full h-full object-cover"
                 />

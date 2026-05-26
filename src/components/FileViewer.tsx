@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
+import { useSignedUrl, resolveArquivoUrl } from "@/lib/storage";
+import { toast } from "sonner";
 
 interface FileViewerProps {
   arquivo: Arquivo | null;
@@ -39,12 +41,15 @@ export function FileViewer({ arquivo, open, onOpenChange, arquivos = [], onNavig
   const toggleFavorito = useToggleFavorito();
   const { data: obra } = useObra(arquivo?.obra_id || "");
   const [showInfo, setShowInfo] = useState(false);
+  const { url: signedUrl } = useSignedUrl(arquivo?.arquivo_url);
 
   if (!arquivo) return null;
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
+    const url = await resolveArquivoUrl(arquivo.arquivo_url);
+    if (!url) { toast.error("Não foi possível gerar o link de download."); return; }
     const link = document.createElement("a");
-    link.href = arquivo.arquivo_url;
+    link.href = url;
     link.download = arquivo.nome;
     link.target = "_blank";
     document.body.appendChild(link);
@@ -74,7 +79,14 @@ export function FileViewer({ arquivo, open, onOpenChange, arquivos = [], onNavig
 
   const renderContent = () => {
     const tipo = arquivo.tipo || "";
-    const url = arquivo.arquivo_url;
+    const url = signedUrl ?? "";
+    if (!url) {
+      return (
+        <div className="text-center text-muted-foreground py-12">
+          Gerando link seguro...
+        </div>
+      );
+    }
 
     if (tipo.startsWith("image/")) {
       return (
@@ -207,7 +219,7 @@ export function FileViewer({ arquivo, open, onOpenChange, arquivos = [], onNavig
                 <div className="flex items-start gap-3">
                   <Building2 className="h-4 w-4 mt-0.5 text-muted-foreground" />
                   <div>
-                    <p className="text-xs text-muted-foreground">Obra</p>
+                    <p className="text-xs text-muted-foreground">Coleção</p>
                     <p className="text-sm font-medium">{obra?.nome || "Carregando..."}</p>
                   </div>
                 </div>

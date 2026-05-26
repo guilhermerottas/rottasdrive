@@ -13,6 +13,7 @@ import { Camera, X } from "lucide-react";
 import { useUpdateObra, Obra } from "@/hooks/useObras";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useSignedUrl } from "@/lib/storage";
 
 interface EditObraDialogProps {
   open: boolean;
@@ -28,6 +29,7 @@ export function EditObraDialog({ open, onOpenChange, obra }: EditObraDialogProps
   const [fotoFile, setFotoFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const updateObra = useUpdateObra();
+  const { url: signedPreview } = useSignedUrl(fotoPreview);
 
   useEffect(() => {
     if (open) {
@@ -86,10 +88,10 @@ export function EditObraDialog({ open, onOpenChange, obra }: EditObraDialogProps
         foto: fotoFile || undefined,
         currentFotoUrl: fotoFile ? obra.foto_url : (fotoPreview ? obra.foto_url : null)
       });
-      toast.success("Obra atualizada com sucesso!");
+      toast.success("Coleção atualizada com sucesso!");
       onOpenChange(false);
     } catch (error) {
-      toast.error("Erro ao atualizar obra");
+      toast.error("Erro ao atualizar coleção");
     }
   };
 
@@ -97,7 +99,7 @@ export function EditObraDialog({ open, onOpenChange, obra }: EditObraDialogProps
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Editar Obra</DialogTitle>
+          <DialogTitle>Editar Coleção</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Photo Upload */}
@@ -113,7 +115,7 @@ export function EditObraDialog({ open, onOpenChange, obra }: EditObraDialogProps
               >
                 {fotoPreview ? (
                   <>
-                    <img src={fotoPreview} alt="Preview" className="h-full w-full object-cover" />
+                    <img src={signedPreview ?? fotoPreview} alt="Preview" className="h-full w-full object-cover" />
                     <Button
                       type="button"
                       variant="destructive"
@@ -146,7 +148,7 @@ export function EditObraDialog({ open, onOpenChange, obra }: EditObraDialogProps
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="nome">Nome da Obra *</Label>
+            <Label htmlFor="nome">Nome da Coleção *</Label>
             <Input
               id="nome"
               value={nome}
@@ -174,7 +176,7 @@ export function EditObraDialog({ open, onOpenChange, obra }: EditObraDialogProps
               id="descricao"
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
-              placeholder="Descrição da obra..."
+              placeholder="Descrição da coleção..."
               rows={3}
               maxLength={1000}
             />

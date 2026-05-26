@@ -21,6 +21,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useAuthContext } from "@/components/AuthProvider";
+import { useSignedUrl } from "@/lib/storage";
 
 interface TrashArquivoItemProps {
   arquivo: ArquivoWithObra;
@@ -70,14 +71,15 @@ export function TrashArquivoItem({ arquivo, onRestore, onDeletePermanently }: Tr
   const isImage = arquivo.tipo?.startsWith("image/");
   const daysRemaining = getDaysRemaining(arquivo.deleted_at);
   const { canEdit } = useAuthContext();
+  const { url: signedUrl } = useSignedUrl(arquivo.arquivo_url);
 
   return (
     <div className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
       {/* Preview/Icon */}
       <div className="flex-shrink-0">
-        {isImage ? (
+        {isImage && signedUrl ? (
           <img
-            src={arquivo.arquivo_url}
+            src={signedUrl}
             alt={arquivo.nome}
             className="h-12 w-12 object-cover rounded"
           />

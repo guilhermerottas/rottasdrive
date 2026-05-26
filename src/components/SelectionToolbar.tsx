@@ -15,6 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useAuthContext } from "@/components/AuthProvider";
+import { resolveArquivoUrl } from "@/lib/storage";
 
 interface SelectionToolbarProps {
   selectedIds: Set<string>;
@@ -44,8 +45,10 @@ export function SelectionToolbar({
     toast.info(`Baixando ${selectedArquivos.length} arquivo(s)...`);
 
     for (const arquivo of selectedArquivos) {
+      const url = await resolveArquivoUrl(arquivo.arquivo_url);
+      if (!url) continue;
       const link = document.createElement("a");
-      link.href = arquivo.arquivo_url;
+      link.href = url;
       link.download = arquivo.nome;
       link.target = "_blank";
       link.rel = "noopener noreferrer";

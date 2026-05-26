@@ -22,8 +22,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { EditObraDialog } from "./EditObraDialog";
-import { ManageObraAccessDialog } from "./ManageObraAccessDialog";
+import { ObraPermissoesDialog } from "./ObraPermissoesDialog";
 import { useAuthContext } from "@/components/AuthProvider";
+import { useSignedUrl } from "@/lib/storage";
 
 interface ObraCardProps {
   obra: Obra;
@@ -32,16 +33,17 @@ interface ObraCardProps {
 export function ObraCard({ obra }: ObraCardProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [accessOpen, setAccessOpen] = useState(false);
+  const [permsOpen, setPermsOpen] = useState(false);
   const deleteObra = useDeleteObra();
-  const { canEdit, isAdmin } = useAuthContext();
+  const { canEdit } = useAuthContext();
+  const { url: signedFoto } = useSignedUrl(obra.foto_url);
 
   const handleDelete = async () => {
     try {
       await deleteObra.mutateAsync(obra.id);
-      toast.success("Obra excluída com sucesso!");
+      toast.success("Coleção excluída com sucesso!");
     } catch (error) {
-      toast.error("Erro ao excluir obra");
+      toast.error("Erro ao excluir coleção");
     }
   };
 
@@ -49,10 +51,10 @@ export function ObraCard({ obra }: ObraCardProps) {
     <>
       <Card className="group hover:shadow-lg transition-all overflow-hidden">
         <Link to={`/obra/${obra.id}`} className="block aspect-[4/3] overflow-hidden bg-muted cursor-pointer">
-          {obra.foto_url ? (
-            <img 
-              src={obra.foto_url} 
-              alt={obra.nome} 
+          {obra.foto_url && signedFoto ? (
+            <img
+              src={signedFoto}
+              alt={obra.nome}
               className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
           ) : (
@@ -80,10 +82,10 @@ export function ObraCard({ obra }: ObraCardProps) {
                     <Pencil className="mr-2 h-4 w-4" />
                     Editar
                   </DropdownMenuItem>
-                  {isAdmin && (
-                    <DropdownMenuItem onClick={() => setAccessOpen(true)}>
+                  {canEdit && (
+                    <DropdownMenuItem onClick={() => setPermsOpen(true)}>
                       <Shield className="mr-2 h-4 w-4" />
-                      Gerenciar Acesso
+                      Permissões da coleção
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem 
@@ -108,9 +110,9 @@ export function ObraCard({ obra }: ObraCardProps) {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir Obra?</AlertDialogTitle>
+            <AlertDialogTitle>Excluir Coleção?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação irá excluir a obra "{obra.nome}" e todos os seus arquivos e pastas. Esta ação não pode ser desfeita.
+              Esta ação irá excluir a coleção "{obra.nome}" e todos os seus arquivos e pastas. Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -123,7 +125,7 @@ export function ObraCard({ obra }: ObraCardProps) {
       </AlertDialog>
 
       <EditObraDialog open={editOpen} onOpenChange={setEditOpen} obra={obra} />
-      <ManageObraAccessDialog open={accessOpen} onOpenChange={setAccessOpen} obra={obra} />
+      <ObraPermissoesDialog open={permsOpen} onOpenChange={setPermsOpen} obra={obra} />
     </>
   );
 }

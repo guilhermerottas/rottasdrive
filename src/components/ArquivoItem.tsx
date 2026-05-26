@@ -46,6 +46,7 @@ import { RenameArquivoDialog } from "./RenameArquivoDialog";
 import { FilePreviewThumbnail } from "./FilePreviewThumbnail";
 import { cn } from "@/lib/utils";
 import { useAuthContext } from "@/components/AuthProvider";
+import { useSignedUrl, resolveArquivoUrl } from "@/lib/storage";
 
 interface ArquivoItemProps {
   arquivo: Arquivo;
@@ -81,6 +82,8 @@ export function ArquivoItem({ arquivo, obraId, viewMode, onView, isSelected = fa
   const toggleFavorito = useToggleFavorito();
   const Icon = getFileIcon(arquivo.tipo);
   const isImage = arquivo.tipo?.startsWith("image/");
+  const { url: signedUrl } = useSignedUrl(arquivo.arquivo_url);
+  const previewUrl = signedUrl ?? "";
 
   const handleToggleFavorito = () => {
     toggleFavorito.mutate({ arquivoId: arquivo.id, isFavorito: !!isFavorito });
@@ -95,9 +98,14 @@ export function ArquivoItem({ arquivo, obraId, viewMode, onView, isSelected = fa
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
+    const url = await resolveArquivoUrl(arquivo.arquivo_url);
+    if (!url) {
+      toast.error("Não foi possível gerar o link de download.");
+      return;
+    }
     const link = document.createElement("a");
-    link.href = arquivo.arquivo_url;
+    link.href = url;
     link.download = arquivo.nome;
     link.target = "_blank";
     link.rel = "noopener noreferrer";
@@ -114,21 +122,33 @@ export function ArquivoItem({ arquivo, obraId, viewMode, onView, isSelected = fa
     e.dataTransfer.effectAllowed = "move";
   };
 
-  const handleShareWhatsApp = () => {
-    const url = encodeURIComponent(arquivo.arquivo_url);
+  const handleShareWhatsApp = async () => {
+    const signed = await resolveArquivoUrl(arquivo.arquivo_url);
+    if (!signed) {
+      toast.error("Não foi possível gerar o link.");
+      return;
+    }
+    const url = encodeURIComponent(signed);
     const text = encodeURIComponent(`Confira este arquivo: ${arquivo.nome}`);
     window.open(`https://wa.me/?text=${text}%20${url}`, "_blank");
   };
 
-  const handleShareEmail = () => {
+  const handleShareEmail = async () => {
+    const signed = await resolveArquivoUrl(arquivo.arquivo_url);
+    if (!signed) {
+      toast.error("Não foi possível gerar o link.");
+      return;
+    }
     const subject = encodeURIComponent(`Arquivo: ${arquivo.nome}`);
-    const body = encodeURIComponent(`Confira este arquivo: ${arquivo.arquivo_url}`);
+    const body = encodeURIComponent(`Confira este arquivo: ${signed}`);
     window.open(`mailto:?subject=${subject}&body=${body}`, "_blank");
   };
 
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(arquivo.arquivo_url);
+      const signed = await resolveArquivoUrl(arquivo.arquivo_url);
+      if (!signed) throw new Error("sem url");
+      await navigator.clipboard.writeText(signed);
       toast.success("Link copiado para a área de transferência!");
     } catch (error) {
       toast.error("Erro ao copiar link");
@@ -172,7 +192,7 @@ export function ArquivoItem({ arquivo, obraId, viewMode, onView, isSelected = fa
             {isImage ? (
               <FilePreviewThumbnail
                 tipo={arquivo.tipo}
-                url={arquivo.arquivo_url}
+                url={previewUrl}
                 nome={arquivo.nome}
                 className="hover:scale-105 transition-transform duration-300"
               />
@@ -180,7 +200,7 @@ export function ArquivoItem({ arquivo, obraId, viewMode, onView, isSelected = fa
               <div className="aspect-[4/3] w-full">
                 <FilePreviewThumbnail
                   tipo={arquivo.tipo}
-                  url={arquivo.arquivo_url}
+                  url={previewUrl}
                   nome={arquivo.nome}
                   iconSize="lg"
                 />
@@ -226,7 +246,9 @@ export function ArquivoItem({ arquivo, obraId, viewMode, onView, isSelected = fa
           <div className="flex items-center justify-between mt-2 px-1">
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{arquivo.nome}</p>
-              <p className="text-xs text-muted-foreground">{formatSize(arquivo.tamanho)}</p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <p className="text-xs text-muted-foreground">{formatSize(arquivo.tamanho)}</p>
+              </div>
             </div>
             
             {/* Three dots menu */}
@@ -451,7 +473,7 @@ export function ArquivoItem({ arquivo, obraId, viewMode, onView, isSelected = fa
           <div className="mb-3 pointer-events-none h-20 w-20 rounded overflow-hidden">
             <FilePreviewThumbnail
               tipo={arquivo.tipo}
-              url={arquivo.arquivo_url}
+              url={previewUrl}
               nome={arquivo.nome}
               iconSize="lg"
             />
@@ -510,7 +532,7 @@ export function ArquivoItem({ arquivo, obraId, viewMode, onView, isSelected = fa
         <div className="flex-shrink-0 h-10 w-10 rounded overflow-hidden">
           <FilePreviewThumbnail
             tipo={arquivo.tipo}
-            url={arquivo.arquivo_url}
+            url={previewUrl}
             nome={arquivo.nome}
             iconSize="sm"
           />
