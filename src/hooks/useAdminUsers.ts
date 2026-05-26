@@ -7,6 +7,7 @@ export interface UserWithProfile {
   user_id: string;
   nome: string | null;
   avatar_url: string | null;
+  cargo: string | null;
   created_at: string;
   role: AppRole;
   email?: string;
@@ -55,6 +56,7 @@ export const useAdminUsers = () => {
           user_id: profile.user_id,
           nome: profile.nome,
           avatar_url: profile.avatar_url,
+          cargo: profile.cargo ?? null,
           created_at: profile.created_at,
           role,
           is_blocked: blockedUserIds.has(profile.user_id),
@@ -81,6 +83,24 @@ export const useAdminUsers = () => {
     },
     onError: (error: any) => {
       toast.error("Erro ao atualizar nível: " + error.message);
+    },
+  });
+
+  const updateUserCargo = useMutation({
+    mutationFn: async ({ userId, cargo }: { userId: string; cargo: string | null }) => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ cargo })
+        .eq("user_id", userId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      toast.success("Cargo atualizado!");
+    },
+    onError: (error: any) => {
+      toast.error("Erro ao atualizar cargo: " + error.message);
     },
   });
 
@@ -116,6 +136,7 @@ export const useAdminUsers = () => {
     isLoading,
     error,
     updateUserRole,
+    updateUserCargo,
     blockUser,
   };
 };
