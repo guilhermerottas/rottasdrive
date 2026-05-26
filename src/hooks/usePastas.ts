@@ -16,30 +16,61 @@ export interface Pasta {
 }
 
 export interface PastaWithObra extends Pasta {
-  obras: { nome: string } | null;
+  obras: { nome: string; workspace_id: string | null } | null;
+}
+
+/**
+ * Pasta retornada pela RPC `pastas_raiz_da_obra` — inclui as pastas-lar
+ * (`is_vinculo=false`) e as vinculadas de outros workspaces (`is_vinculo=true`).
+ * Para subpastas (`pastaPaiId` definido), `is_vinculo` é sempre false.
+ */
+export interface PastaComVinculo extends Pasta {
+  is_vinculo: boolean;
+  origem_workspace_id: string | null;
 }
 
 export function usePastas(obraId: string, pastaPaiId?: string | null) {
   return useQuery({
-    queryKey: ["pastas", obraId, pastaPaiId],
+    queryKey: ["pastas", obraId, pastaPaiId ?? null],
     staleTime: 2 * 60 * 1000,
     queryFn: async () => {
-      let query = supabase
-        .from("pastas")
-        .select("*")
-        .eq("obra_id", obraId)
-        .is("deleted_at", null)
-        .order("nome", { ascending: true });
-
       if (pastaPaiId) {
-        query = query.eq("pasta_pai_id", pastaPaiId);
-      } else {
-        query = query.is("pasta_pai_id", null);
+        // Subpasta: continua simples — RLS filtra naturalmente.
+        const { data, error } = await supabase
+          .from("pastas")
+          .select("*")
+          .eq("obra_id", obraId)
+          .is("deleted_at", null)
+          .eq("pasta_pai_id", pastaPaiId)
+          .order("nome", { ascending: true });
+        if (error) throw error;
+        return (data ?? []).map((p) => ({
+          ...(p as Pasta),
+          is_vinculo: false,
+          origem_workspace_id: null,
+        })) as PastaComVinculo[];
       }
 
-      const { data, error } = await query;
+      // Raiz: usa RPC que une pastas-lar + vínculos.
+      const { data, error } = await supabase.rpc("pastas_raiz_da_obra", {
+        _obra_id: obraId,
+      });
       if (error) throw error;
-      return data as Pasta[];
+      return (data ?? [])
+        .map((row) => ({
+          id: row.id,
+          obra_id: row.obra_id,
+          pasta_pai_id: row.pasta_pai_id,
+          nome: row.nome,
+          cor: (row.cor ?? "default") as PastaColor,
+          created_at: row.created_at,
+          updated_at: row.updated_at,
+          deleted_at: row.deleted_at,
+          deleted_by: null,
+          is_vinculo: row.is_vinculo,
+          origem_workspace_id: row.origem_workspace_id,
+        }))
+        .sort((a, b) => a.nome.localeCompare(b.nome)) as PastaComVinculo[];
     },
     enabled: !!obraId,
   });
@@ -198,7 +229,7 @@ export function useTrashPastas() {
       // Only show top-level deleted pastas (not subfolders deleted as part of parent)
       const { data, error } = await supabase
         .from("pastas")
-        .select("*, obras(nome)")
+        .select("*, obras(nome, workspace_id)")
         .not("deleted_at", "is", null)
         .order("deleted_at", { ascending: false });
       if (error) throw error;

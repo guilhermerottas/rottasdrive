@@ -8,6 +8,7 @@ export interface Obra {
   descricao: string | null;
   foto_url: string | null;
   endereco: string | null;
+  workspace_id: string;
   created_at: string;
   updated_at: string;
 }
@@ -20,6 +21,24 @@ export function useObras() {
       const { data, error } = await supabase
         .from("obras")
         .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data as Obra[];
+    },
+  });
+}
+
+export function useObrasByWorkspace(workspaceId: string | undefined) {
+  return useQuery({
+    queryKey: ["obras", "workspace", workspaceId],
+    staleTime: 5 * 60 * 1000,
+    enabled: !!workspaceId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("obras")
+        .select("*")
+        .eq("workspace_id", workspaceId!)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -50,16 +69,18 @@ export function useCreateObra() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ 
-      nome, 
-      descricao, 
-      endereco, 
-      foto 
-    }: { 
-      nome: string; 
-      descricao?: string; 
+    mutationFn: async ({
+      nome,
+      descricao,
+      endereco,
+      foto,
+      workspaceId,
+    }: {
+      nome: string;
+      descricao?: string;
       endereco?: string;
       foto?: File;
+      workspaceId: string;
     }) => {
       let foto_url: string | undefined;
 
@@ -82,7 +103,7 @@ export function useCreateObra() {
 
       const { data, error } = await supabase
         .from("obras")
-        .insert({ nome, descricao, endereco, foto_url })
+        .insert({ nome, descricao, endereco, foto_url, workspace_id: workspaceId })
         .select()
         .single();
 

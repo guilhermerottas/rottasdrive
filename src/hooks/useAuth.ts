@@ -7,6 +7,7 @@ export interface Profile {
   user_id: string;
   nome: string | null;
   avatar_url: string | null;
+  cargo: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -53,16 +54,32 @@ export const useAuth = () => {
 
   useEffect(() => {
     let mounted = true;
+    // Garante que log_access roda só uma vez por boot do app (evita repetir em token refresh)
+    let accessLogged = false;
+    const logAccessOnce = () => {
+      if (accessLogged) return;
+      accessLogged = true;
+      supabase.rpc("log_access").then(({ error }) => {
+        if (error) {
+          console.warn("Falha ao registrar acesso:", error.message);
+          accessLogged = false; // permite tentar de novo se falhou
+        }
+      });
+    };
 
     // Set up auth listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
-        
+
         setSession(session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
+          // Registra acesso quando uma sessão é detectada (login novo ou app já logado)
+          if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
+            logAccessOnce();
+          }
           // Use setTimeout to avoid Supabase deadlock
           setTimeout(() => {
             if (mounted) fetchUserData(session.user.id);
@@ -71,6 +88,7 @@ export const useAuth = () => {
           setProfile(null);
           setRoles([]);
           fetchedUserIdRef.current = null;
+          if (event === "SIGNED_OUT") accessLogged = false;
         }
         setLoading(false);
       }
@@ -122,6 +140,7 @@ export const useAuth = () => {
           error: { message: "Sua conta foi bloqueada. Entre em contato com o administrador." }
         };
       }
+      // Acesso é registrado via onAuthStateChange (evento SIGNED_IN), não aqui.
     }
 
     return { data, error };

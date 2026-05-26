@@ -35,7 +35,8 @@ export function useFavoritos() {
             created_at,
             updated_at,
             deleted_at,
-            uploaded_by
+            uploaded_by,
+            obras!inner ( workspace_id )
           )
         `)
         .eq("user_id", user.id)

@@ -78,7 +78,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
                 await supabase.functions.invoke("notify-upload", {
                     body: {
                         obraId,
-                        obraNome: obra?.nome || "Obra desconhecida",
+                        obraNome: obra?.nome || "Coleção desconhecida",
                         pastaNome,
                         arquivos: data.files.map(nome => ({ nome })),
                         uploaderName: profile?.nome || user?.email || "Usuário",

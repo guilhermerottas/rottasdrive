@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 
 export interface UploaderProfile {
   nome: string | null;
@@ -19,11 +20,15 @@ export interface Arquivo {
   deleted_by: string | null;
   uploaded_by: string | null;
   descricao: string | null;
+  status_indexacao: Database["public"]["Enums"]["status_indexacao"];
+  indexacao_erro: string | null;
+  indexado_em: string | null;
+  paginas_total: number | null;
   uploader?: UploaderProfile | null;
 }
 
 export interface ArquivoWithObra extends Arquivo {
-  obras: { nome: string } | null;
+  obras: { nome: string; workspace_id: string | null } | null;
 }
 
 export function useArquivos(obraId: string, pastaId?: string | null) {
@@ -77,7 +82,7 @@ export function useTrashArquivos() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("arquivos")
-        .select("*, obras(nome)")
+        .select("*, obras(nome, workspace_id)")
         .not("deleted_at", "is", null)
         .order("deleted_at", { ascending: false });
       if (error) throw error;
