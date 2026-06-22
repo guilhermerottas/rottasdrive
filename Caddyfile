@@ -1,0 +1,25 @@
+# Caddy serve a SPA do dist/ no Railway.
+# Replica os rewrites e headers que antes vinham do vercel.json.
+{
+	admin off
+	auto_https off
+}
+
+:{$PORT}
+
+root * /srv/dist
+encode gzip
+
+# Rewrites SPA: qualquer rota inexistente cai no index.html.
+try_files {path} /index.html
+file_server
+
+header {
+	X-Content-Type-Options nosniff
+	X-Frame-Options DENY
+	Referrer-Policy strict-origin-when-cross-origin
+	Permissions-Policy "camera=(), microphone=(), geolocation=()"
+	X-DNS-Prefetch-Control on
+	# remove header padrão do Caddy
+	-Server
+}
