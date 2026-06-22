@@ -3,18 +3,14 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 // --- CORS: domínios prod + qualquer porta de localhost para dev ---
 const ALLOWED_ORIGINS = [
-  "https://app.obrascheck.com.br",
-  "https://rottasdrive.lovable.app",
-  "https://id-preview--27012e3a-a587-4fdf-94d2-3d830603f691.lovable.app",
+  "https://drive.rottasconstrutora.com.br",
 ];
 const LOCALHOST_RE = /^https?:\/\/localhost(:\d+)?$/;
-const LOVABLE_RE = /^https:\/\/.*\.lovable\.app$/;
 
 function isAllowedOrigin(origin: string): boolean {
   if (!origin) return false;
   if (ALLOWED_ORIGINS.includes(origin)) return true;
   if (LOCALHOST_RE.test(origin)) return true;
-  if (LOVABLE_RE.test(origin)) return true;
   return false;
 }
 

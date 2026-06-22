@@ -3,8 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 // --- CORS: restrict to known origins ---
 const ALLOWED_ORIGINS = [
-  "https://rottasdrive.lovable.app",
-  "https://id-preview--27012e3a-a587-4fdf-94d2-3d830603f691.lovable.app",
+  "https://drive.rottasconstrutora.com.br",
   "http://localhost:5173",
   "http://localhost:3000",
 ];

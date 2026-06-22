@@ -7,7 +7,7 @@ export const publicShareUrl = (shortCode: string) => {
   const origin =
     typeof window !== "undefined" && window.location?.origin
       ? window.location.origin
-      : "https://app.obrascheck.com.br";
+      : "https://drive.rottasconstrutora.com.br";
   return `${origin}/arquivos/p/${shortCode}`;
 };
 

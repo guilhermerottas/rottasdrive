@@ -5,8 +5,7 @@ const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
 // --- CORS: restrict to known origins ---
 const ALLOWED_ORIGINS = [
-  "https://rottasdrive.lovable.app",
-  "https://id-preview--27012e3a-a587-4fdf-94d2-3d830603f691.lovable.app",
+  "https://drive.rottasconstrutora.com.br",
   "http://localhost:5173",
   "http://localhost:3000",
 ];
